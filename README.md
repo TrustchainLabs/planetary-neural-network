@@ -255,7 +255,7 @@ GET /votes/proposal/{proposalId}/results
 
 ### Environment Configuration
 
-Create `.dao.env` file:
+Create `.smart_app.env` file:
 ```bash
 # Database Configuration
 DATABASE_URL=mongodb://localhost:27017/hsuite_dao
