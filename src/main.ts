@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 /**
  * @module main
  * @description Application bootstrap and configuration module
@@ -14,17 +15,15 @@
  */
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@hsuite/nestjs-swagger';
-import * as csurf from 'csurf';
 import helmet from 'helmet';
-import * as bodyParser from 'body-parser';
-import * as cookieParser from 'cookie-parser';
-import * as compression from 'compression';
+import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
+import compression from 'compression';
 import { CustomThrottlerGuard } from '@hsuite/throttler';
 import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-host';
 import { SmartAppService } from './smart-app.service';
 import { SmartAppModule } from './smart-app.module';
-import { ClusterService } from '@hsuite/cluster';
-import * as express from 'express';
+import express from 'express';
 import { ConfigService } from '@nestjs/config';
 
 /**
@@ -120,24 +119,4 @@ export async function bootstrap() {
   return app;
 }
 
-/**
- * Application startup logic
- * 
- * If CLUSTERS environment variable is set and not zero, the application
- * will run in clustered mode with the specified number of worker processes.
- * Otherwise, it runs in single-process mode.
- * 
- * Clustering improves performance on multi-core systems by distributing
- * the workload across multiple CPU cores.
- */
-// clusterizing the app...
-if(process.env.CLUSTERS && process.env.CLUSTERS != '0') {
-  ClusterService.clusterize(
-    Number(process.env.CLUSTERS), 
-    bootstrap
-  );
-} 
-// or simply bootstrapping the app...
-else {
-  bootstrap();
-}
+bootstrap();

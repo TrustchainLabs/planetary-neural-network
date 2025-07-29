@@ -1,0 +1,43 @@
+{
+  "smartNodeSecurity": "full",
+  "actionsConditions": {
+    "values": [
+      "update",
+      "delete",
+      "message"
+    ],
+    "controller": "owner"
+  },
+  "updateConditions": {
+    "values": [
+      "memo"
+    ],
+    "controller": "owner"
+  },
+  "tokenGates": {
+    "fungibles": {
+      "tokens": []
+    },
+    "nonFungibles": {
+      "tokens": []
+    },
+    "timeRange": {
+      "from": 0,
+      "to": 0
+    }
+  },
+  "customInterface": {
+    "interfaceName": "Dao",
+    "properties": {
+      "daoId": "string",
+      "ownerAddress": "string",
+      "votingRules": {
+        "threshold": "number",
+        "minVotingPeriod": "number",
+        "tokenWeighted": "boolean"
+      },
+      "members": "string",
+      "proposals": "string"
+    }
+  }
+}

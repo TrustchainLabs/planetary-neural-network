@@ -10,7 +10,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { Document, Schema as MongooseSchema } from 'mongoose';
-import { Proposal } from '../../proposals/entities/proposal.entity';
 
 /**
  * @type DaoDocument
@@ -243,7 +242,7 @@ export class Dao {
     description: 'Proposals associated with this DAO',
     required: false
   })
-  proposals: Proposal[] | MongooseSchema.Types.ObjectId[];
+  proposals: any[] | MongooseSchema.Types.ObjectId[];
 
   /**
    * The timestamp when this DAO was created

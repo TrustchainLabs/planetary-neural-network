@@ -14,7 +14,7 @@ import client from "./client";
  */
 export default registerAs('authentication', (): IAuth.IConfiguration.IAuthentication => ({
     /** @property {boolean} enabled - Indicates if the authentication module is enabled. */
-    enabled: true,
+    enabled: false,
     /** @property {Object} commonOptions - Common options for authentication. */
     commonOptions: {
         /** @property {Object} redis - Redis configuration for session storage. */

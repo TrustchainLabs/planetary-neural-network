@@ -10,6 +10,7 @@ import { Module } from '@nestjs/common';
 import { ConfigCommand } from './cli/config-cli';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Config, ConfigSchema } from './entities/config.entity';
+import { SmartLedgersModule } from '../../shared/modules/smart-ledgers.module';
 
 /**
  * @class ConfigsModule
@@ -29,7 +30,8 @@ import { Config, ConfigSchema } from './entities/config.entity';
     MongooseModule.forFeature([{
       name: Config.name, 
       schema: ConfigSchema 
-    }])    
+    }]),
+    SmartLedgersModule,
   ],
   providers: [ConfigCommand],
   exports: [ConfigCommand],

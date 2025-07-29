@@ -232,7 +232,7 @@ export default registerAs('subscription', (): ISubscription.IConfig.IOptions => 
          * @type {boolean}
          * @description Enables/disables access control through token gating
          */
-        enabled: true,
+        enabled: false,
 
         /**
          * Token gating options

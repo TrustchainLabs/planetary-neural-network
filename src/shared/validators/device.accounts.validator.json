@@ -1,0 +1,32 @@
+{
+    "smartNodeSecurity": "full",
+    "updateConditions": {
+      "values": [],
+      "controller": "owner"
+    },
+    "actionsConditions": {
+      "values": [
+        "transfer",
+        "delete",
+        "update",
+        "allowance-approval",
+        "allowance-delete"
+      ],
+      "controller": "owner"
+    },
+    "tokenGates": {
+      "fungibles": {
+        "tokens": []
+      },
+      "nonFungibles": {
+        "tokens": []
+      },
+      "timeRange": {
+        "from": 0,
+        "to": 0
+      }
+    },
+    "swapConditions": {
+      "prices": []
+    }
+  }

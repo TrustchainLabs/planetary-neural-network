@@ -54,9 +54,11 @@ import { BullModule } from '@nestjs/bull';
 
 // Import our new modules
 import { DaoModule } from './modules/daos/dao.module';
-import { ProposalModule } from './modules/proposals/proposal.module';
-import { VoteModule } from './modules/votes/vote.module';
+import { DevicesModule } from './modules/devices/devices.module';
 import { ConfigsModule } from './modules/config/config.module';
+import { TemperatureSensorModule } from './modules/temperature-sensor/temperature-sensor.module';
+import { PiHealthModule } from './modules/pi-health/pi-health.module';
+import { SmartLedgersModule } from './shared/modules/smart-ledgers.module';
 
 import authentication from '../config/modules/authentication';
 import client from '../config/modules/client';
@@ -74,6 +76,7 @@ import ipfs from '../config/modules/ipfs';
 import subscription from '../config/modules/subscription';
 import { SubscriptionsModule } from '@hsuite/subscriptions';
 import { ISubscription } from '@hsuite/subscriptions-types';
+import { SmartLedgersService } from '@hsuite/smart-ledgers';
 
 /**
  * @class SmartAppModule
@@ -88,7 +91,7 @@ import { ISubscription } from '@hsuite/subscriptions-types';
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
-      envFilePath: '.smart_app.env',
+      envFilePath: ['.smart_app.env'],
       load: [
         authentication,
         client,
@@ -109,7 +112,7 @@ import { ISubscription } from '@hsuite/subscriptions-types';
       useFactory: async (configService: ConfigService) => {
         const redisConfig = configService.getOrThrow<RedisClientOptions & Config>('redis');
         return {
-          store: await redisStore(redisConfig),
+          store: await redisStore(redisConfig as any),
         };
       }
     }),
@@ -163,9 +166,10 @@ export class SmartAppModule {
       imports: [
         // Import our new modules
         DaoModule,
-        ProposalModule,
-        VoteModule,
+        DevicesModule,
         ConfigsModule,
+        TemperatureSensorModule,
+        PiHealthModule,
         
         // Configure Bull module for queues
         BullModule.forRootAsync({
@@ -217,6 +221,7 @@ export class SmartAppModule {
         }),
         SmartNodeSdkModule.forRootAsync({
           imports: [ConfigModule, SmartConfigModule],
+          inject: [ConfigService],
           useFactory: async (configService: ConfigService) => ({
             client: configService.getOrThrow<IClient.IOptions>('client')
           })
@@ -224,7 +229,7 @@ export class SmartAppModule {
         ...(
           authentication().enabled ? 
           [AuthModule.forRootAsync({
-            imports: [ConfigModule, ClientModule],
+            imports: [ConfigModule, ClientModule, SmartLedgersModule],
             inject: [ConfigService, ClientService],
             useFactory: async (configService: ConfigService, clientService: ClientService) => ({
               ...configService.getOrThrow<IAuth.IConfiguration.IAuthentication>('authentication')
@@ -247,7 +252,7 @@ export class SmartAppModule {
         ...(
           subscription().enabled ? 
           [SubscriptionsModule.forRootAsync({
-            imports: [ConfigModule, SmartConfigModule],
+            imports: [ConfigModule, SmartConfigModule, SmartLedgersModule],
             inject: [ConfigService, SmartConfigService],
             jwt: authentication().commonOptions.jwt,
             enableIssuer: subscription().issuer.enabled,

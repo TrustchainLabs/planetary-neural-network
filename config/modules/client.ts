@@ -17,7 +17,7 @@ export default registerAs('client', (): IClient.IOptions => ({
      * Indicates whether the client is enabled.
      * @type {boolean}
      */
-    enabled: true,
+    enabled: false,
 
     /**
      * The base URL for the Smart Registry API.

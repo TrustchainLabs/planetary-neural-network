@@ -1,0 +1,47 @@
+{
+  "smartNodeSecurity": "full",
+  "actionsConditions": {
+    "values": [
+      "update",
+      "delete",
+      "message"
+    ],
+    "controller": "owner"
+  },
+  "updateConditions": {
+    "values": [
+      "memo"
+    ],
+    "controller": "owner"
+  },
+  "tokenGates": {
+    "fungibles": {
+      "tokens": []
+    },
+    "nonFungibles": {
+      "tokens": []
+    },
+    "timeRange": {
+      "from": 0,
+      "to": 0
+    }
+  },
+  "customInterface": {
+    "interfaceName": "Device",
+    "properties": {
+      "deviceId": "string",
+      "name": "string",
+      "ownerAddress": "string",
+      "sensorData": {
+        "timestamp": "number",
+        "location": {
+          "type": "string",
+          "coordinates": "array"
+        },
+        "measurements": "object"
+      },
+      "status": "string",
+      "lastSeen": "number"
+    }
+  }
+} 
