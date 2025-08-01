@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as tf from '@tensorflow/tfjs-node';
+import * as tf from '@tensorflow/tfjs';
 
 @Injectable()
 export class PiHealthMLService {
@@ -67,7 +67,7 @@ export class PiHealthMLService {
       const analysis = {
         riskScore: Math.round(riskScore * 100) / 100,
         anomalyDetected,
-        prediction: this.getAlertLevelName(alertLevel),
+        prediction: this.getAlertLevelName(alertLevelIndex),
         confidence: Math.round(predictionArray[0][alertLevelIndex] * 100) / 100,
         alertLevel,
         factors: this.getRiskFactors(healthData)

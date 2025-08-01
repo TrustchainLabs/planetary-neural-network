@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import * as tf from '@tensorflow/tfjs-node';
+import * as tf from '@tensorflow/tfjs';
+import * as crypto from 'crypto';
 
 interface TemperatureMLPrediction {
   predictedValue: number;
@@ -16,6 +17,26 @@ interface TemperatureMLAnalysis {
   riskAssessment: 'low' | 'medium' | 'high' | 'critical';
   confidenceScore: number;
   insights: string[];
+}
+
+// On-chain inference data interface
+export interface OnChainTemperatureInference {
+  deviceId: string;
+  timestamp: string;
+  location: { lat: number; lon: number };
+  inferenceType: string;
+  inferenceOutput: {
+    metric: string;
+    value: number;
+    anomalyScore: number;
+    isAnomaly: boolean;
+  };
+  confidenceScore: number;
+  triggeredEvent: string;
+  derivedMetrics: Record<string, number>;
+  hashRawData: string;
+  signedBy: string;
+  chainTxHash?: string;
 }
 
 @Injectable()
@@ -500,7 +521,60 @@ export class TemperatureMachineLearningService implements OnModuleInit {
       insights.push(`⚠️ Lower prediction confidence (${(avgConfidence * 100).toFixed(0)}%) - more data needed for accuracy`);
     }
     
-    return insights;
+          return insights;
+    }
+
+  /**
+   * Prepare on-chain inference data from the latest ML analysis and raw reading
+   */
+  public prepareOnChainInference({
+    deviceId,
+    timestamp,
+    location,
+    mlResult,
+    triggeredEvent,
+    rawSensorData,
+    did
+  }: {
+    deviceId: string;
+    timestamp: Date;
+    location: { lat: number; lon: number };
+    mlResult: {
+      value: number;
+      anomalyScore: number;
+      isAnomaly: boolean;
+      confidence: number;
+      heatIndex?: number;
+    };
+    triggeredEvent: string;
+    rawSensorData: object;
+    did: string;
+  }): OnChainTemperatureInference {
+    return {
+      deviceId,
+      timestamp: timestamp.toISOString(),
+      location,
+      inferenceType: 'anomaly_detection',
+      inferenceOutput: {
+        metric: 'temperature',
+        value: mlResult.value,
+        anomalyScore: mlResult.anomalyScore,
+        isAnomaly: mlResult.isAnomaly,
+      },
+      confidenceScore: mlResult.confidence,
+      triggeredEvent,
+      derivedMetrics: {
+        heatIndex: mlResult.heatIndex ?? 0,
+      },
+      hashRawData: this.hashRawData(rawSensorData),
+      signedBy: did,
+      // chainTxHash: to be filled after submission
+    };
+  }
+
+  private hashRawData(raw: object): string {
+    const json = JSON.stringify(raw);
+    return 'sha256:' + crypto.createHash('sha256').update(json).digest('hex');
   }
 
   /**

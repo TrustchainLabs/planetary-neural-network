@@ -55,7 +55,7 @@ export class TemperatureSensorConsumer {
       );
 
       // 5. Submit AI analysis to blockchain/HCS topic (not raw readings!)
-      const chainTxHash = await this.submitAnalysisToChain(analysisRecord);
+      const chainTxHash = await this.submitAnalysisToChain(analysisRecord, mlAnalysis, readings);
 
       // 6. Update analysis record with chain transaction hash
       await this.temperatureModelService.updateAnalysisWithChainTx(
@@ -307,60 +307,108 @@ export class TemperatureSensorConsumer {
   }
 
   /**
-   * Submits analysis results to blockchain/HCS topic
+   * Submits analysis results to blockchain/HCS topic using the new on-chain inference format
    */
-  private async submitAnalysisToChain(analysis: TemperatureAnalysis): Promise<string> {
+  private async submitAnalysisToChain(
+    analysis: TemperatureAnalysis, 
+    mlAnalysis: any, 
+    readings: any[]
+  ): Promise<string> {
     try {
-      // Prepare optimized data for chain submission (only valuable insights, not raw data)
-      const chainData = {
+      // Get the most recent reading from the batch for context
+      const latestReading = readings[readings.length - 1];
+      
+      // Determine if anomaly was detected
+      const isAnomaly = mlAnalysis?.predictions?.some(p => p.isAnomaly) || 
+                       analysis.severity === 'critical' || 
+                       analysis.severity === 'high';
+      
+      // Calculate anomaly score (0-10 scale)
+      const anomalyScore = isAnomaly ? 
+        Math.min(10, (mlAnalysis?.predictions?.[0]?.anomalyScore || 5) * 2) : 
+        (mlAnalysis?.predictions?.[0]?.anomalyScore || 0);
+      
+      // Determine triggered event
+      const triggeredEvent = isAnomaly ? 
+        `temperature anomaly detected > threshold` : 
+        `normal temperature reading`;
+      
+      // Prepare on-chain inference data using the ML service method
+      const onChainData = this.temperatureMlService.prepareOnChainInference({
         deviceId: analysis.deviceId,
-        batchId: analysis.batchId,
-        analysisTimestamp: analysis.analysisTimestamp,
-        summary: {
+        timestamp: analysis.analysisTimestamp,
+        location: analysis.location ? 
+          { lat: analysis.location.latitude, lon: analysis.location.longitude } : 
+          { lat: -23.55, lon: -46.63 }, // Default location if not available
+        mlResult: {
+          value: analysis.averageTemperature,
+          anomalyScore: anomalyScore,
+          isAnomaly: isAnomaly,
+          confidence: mlAnalysis?.confidenceScore || 0.75,
+          heatIndex: this.calculateHeatIndex(analysis.averageTemperature, 50) // Default humidity 50%
+        },
+        triggeredEvent: triggeredEvent,
+        rawSensorData: {
+          batchId: analysis.batchId,
+          readingCount: analysis.readingCount,
           averageTemperature: analysis.averageTemperature,
           temperatureRange: {
             min: analysis.minimumTemperature,
-            max: analysis.maximumTemperature,
+            max: analysis.maximumTemperature
           },
-          readingCount: analysis.readingCount,
-          timeSpan: {
-            start: analysis.timeRange.start,
-            end: analysis.timeRange.end,
-          },
+          analysisTimestamp: analysis.analysisTimestamp
         },
-        insights: {
-          severity: analysis.severity,
-          outlierCount: analysis.outliers?.length || 0,
-          stabilityScore: analysis.statisticalData?.stabilityScore,
-          predictions: analysis.predictions,
-        },
-        warnings: analysis.warnings,
-        location: analysis.location,
-        aiSummary: analysis.aiInsights?.substring(0, 500), // Truncate for chain efficiency
-        metadata: {
-          version: '1.0',
-          analysisType: 'batch_temperature_analysis',
-        },
-      };
+        did: 'did:hbarsuite:smartnode-001' // TODO: Get from device configuration
+      });
       
-      this.logger.log('Submitting temperature analysis to chain:', JSON.stringify(chainData, null, 2));
+      this.logger.log('Submitting temperature inference to chain:', JSON.stringify(onChainData, null, 2));
       
-      // TODO: Use device's HCS topic to submit analysis data
+      // TODO: Use device's HCS topic to submit inference data
       // const chain = this.smartConfigService.getChain();
       // const ledger = this.smartLedgersService.getAdapter(chain).getLedger();
-      // const txHash = await ledger.submitToTopic(deviceTopic, chainData);
+      // const txHash = await ledger.submitToTopic(deviceTopic, onChainData);
       
-      // Simulate transaction hash
-      const simulatedTxHash = `analysis_${Date.now().toString(16)}${Math.random().toString(16).substr(2, 8)}`;
+      // Simulate transaction hash in the expected format
+      const simulatedTxHash = `0.0.123456-${Date.now()}.${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
       
-      this.logger.log(`Simulated chain submission of analysis with hash: ${simulatedTxHash}`);
+      // Update the on-chain data with the transaction hash
+      onChainData.chainTxHash = simulatedTxHash;
+      
+      this.logger.log(`Simulated chain submission of inference with hash: ${simulatedTxHash}`);
+      this.logger.log('Final on-chain data:', JSON.stringify(onChainData, null, 2));
       
       return simulatedTxHash;
 
     } catch (error) {
-      this.logger.error('Error submitting analysis to chain:', error);
+      this.logger.error('Error submitting inference to chain:', error);
       throw error;
     }
+  }
+
+  /**
+   * Calculate heat index from temperature and humidity
+   */
+  private calculateHeatIndex(tempCelsius: number, humidity: number): number {
+    // Convert to Fahrenheit for heat index calculation
+    const tempF = (tempCelsius * 9/5) + 32;
+    
+    // Simplified heat index formula
+    if (tempF < 80) {
+      return tempCelsius; // No heat index below 80°F
+    }
+    
+    const hi = -42.379 + 
+               2.04901523 * tempF + 
+               10.14333127 * humidity - 
+               0.22475541 * tempF * humidity - 
+               6.83783e-3 * tempF * tempF - 
+               5.481717e-2 * humidity * humidity + 
+               1.22874e-3 * tempF * tempF * humidity + 
+               8.5282e-4 * tempF * humidity * humidity - 
+               1.99e-6 * tempF * tempF * humidity * humidity;
+    
+    // Convert back to Celsius
+    return (hi - 32) * 5/9;
   }
 
   /**
