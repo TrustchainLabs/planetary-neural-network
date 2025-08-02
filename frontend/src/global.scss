@@ -1,0 +1,79 @@
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+ * {
+  font-family: 'Rowdies', sans-serif;
+ }
+
+/* Core CSS required for Ionic components to work properly */
+@import "~@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "~@ionic/angular/css/normalize.css";
+@import "~@ionic/angular/css/structure.css";
+@import "~@ionic/angular/css/typography.css";
+@import '~@ionic/angular/css/display.css';
+
+/* Optional CSS utils that can be commented out */
+@import "~@ionic/angular/css/padding.css";
+@import "~@ionic/angular/css/float-elements.css";
+@import "~@ionic/angular/css/text-alignment.css";
+@import "~@ionic/angular/css/text-transformation.css";
+@import "~@ionic/angular/css/flex-utils.css";
+
+/* Dark Mode CSS */
+@import "~@ionic/angular/css/palettes/dark.always.css";
+
+/* App Font */
+@import url('https://fonts.googleapis.com/css2?family=Rowdies:wght@300;400;700&display=swap');
+
+/*
+ * Dark Mode Global Text Fixes
+ * Ensure all text is properly visible in dark mode
+ */
+body {
+  color: var(--ion-text-color);
+}
+
+ion-content {
+  --color: var(--ion-text-color);
+}
+
+p, h1, h2, h3, h4, h5, h6, span, div, ion-label {
+  color: var(--ion-text-color);
+}
+
+ion-item {
+  --color: var(--ion-text-color);
+
+  ion-label {
+    color: var(--ion-text-color);
+  }
+}
+
+ion-button {
+  --color: var(--ion-text-color);
+}
+
+ion-chip {
+  --color: var(--ion-text-color);
+}
+
+/* Card backgrounds in dark mode */
+.allowance-card,
+.topic-card,
+.message-card {
+  color: var(--ion-text-color);
+
+  h1, h2, h3, h4, h5, h6, p, span, div {
+    color: var(--ion-text-color);
+  }
+}

@@ -1,0 +1,103 @@
+.modal-inner-content {
+    margin: 16px;
+    border-radius: 12px;
+    background: rgba(var(--ion-background-color-rgb), 0.8);
+}
+
+ .wallet-modal {
+    padding: 32px;
+
+    .header {
+        h6 {
+            margin-top: 6px;
+            color: var(--ion-color-light-shade);
+        }
+    }
+
+    .session-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        .session-item {
+            display: flex;
+            align-items: center;
+
+            ion-item {
+                flex-grow: 1;
+
+                ion-label {
+                    p {
+                        color: var(--ion-color-light-shade);
+                    }
+                }
+            }
+
+            ion-icon.delete-icon {
+                margin-left: 8px;
+                font-size: 24px;
+                cursor: pointer;
+                &:hover {
+                    color: var(--ion-color-danger);
+                }
+            }
+        }
+    }
+ }
+
+.close-modal {
+    position: absolute;
+    top: 32px;
+    right: 32px;
+    cursor: pointer;
+
+    ion-icon {
+        font-size: 24px;
+    }
+}
+
+.header {
+    margin-bottom: 32px;
+}
+
+.wallet {
+    margin: 16px 0px;
+    padding: 16px 32px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+
+    width: 100%;
+    height: 100px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+        max-height: 100%;
+        max-width: 100%;
+        margin: auto;
+    }
+
+    cursor: pointer;
+    &:hover {
+        transform: scale(1.02);
+        transition: transform 0.2s;
+    }
+    transition: transform 0.2s;
+}
+
+.add-account-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 32px;
+    margin-right: 32px;
+
+    ion-button {
+        // --background: var(--hsuite-gradient);
+        --border-radius: 12px;
+        font-weight: bold;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+}

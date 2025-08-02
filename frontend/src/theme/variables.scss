@@ -1,0 +1,177 @@
+// Ionic Variables and Theme Colors
+// Based on Ecosphere Prime Explorer color scheme
+
+// Color Variables
+:root {
+  --primary-color: rgba(18, 160, 56, 1);
+  --secondary-color: rgba(80, 160, 240, 1);
+  --background-color: rgba(19, 19, 19, 0.9);
+  --content-background-color: rgba(120, 120, 120, 0.15);
+  --text-color: rgba(217, 217, 217, 1);
+  --border-color: rgba(58, 58, 58, 1);
+  --primary-hover-color: rgba(15, 130, 45, 1);
+
+  // Ionic Color Variables
+  --ion-color-primary: var(--primary-color);
+  --ion-color-primary-rgb: 18, 160, 56;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #0f8038;
+  --ion-color-primary-tint: var(--primary-hover-color);
+
+  --ion-color-secondary: var(--secondary-color);
+  --ion-color-secondary-rgb: 80, 160, 240;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #4080e0;
+  --ion-color-secondary-tint: #6090f0;
+
+  --ion-background-color: var(--background-color);
+  --ion-background-color-rgb: 19, 19, 19;
+
+  --ion-text-color: var(--text-color);
+  --ion-text-color-rgb: 217, 217, 217;
+
+  --ion-color-step-50: var(--content-background-color);
+  --ion-color-step-100: rgba(120, 120, 120, 0.25);
+  --ion-color-step-150: rgba(120, 120, 120, 0.35);
+  --ion-color-step-200: rgba(120, 120, 120, 0.45);
+
+  // Border and Item Colors
+  --ion-item-background: var(--content-background-color);
+  --ion-item-border-color: var(--border-color);
+  --ion-toolbar-background: var(--background-color);
+  --ion-toolbar-border-color: var(--border-color);
+
+  // Input Colors
+  --ion-input-background: var(--content-background-color);
+  --ion-input-border-color: var(--border-color);
+  --ion-input-color: var(--text-color);
+
+  // Button Colors
+  --ion-button-background: var(--primary-color);
+  --ion-button-background-activated: var(--primary-hover-color);
+  --ion-button-background-hover: var(--primary-hover-color);
+  --ion-button-color: #ffffff;
+
+  // Card Colors
+  --ion-card-background: var(--content-background-color);
+  --ion-card-color: var(--text-color);
+
+  // Loading Colors
+  --ion-loading-background: var(--background-color);
+  --ion-loading-color: var(--text-color);
+}
+
+// Typography
+* {
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+// Global Styles
+html, body {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+// Custom Classes
+.container {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.text-primary {
+  color: var(--primary-color);
+}
+
+.text-secondary {
+  color: var(--secondary-color);
+}
+
+.bg-content {
+  background-color: var(--content-background-color);
+}
+
+.border-default {
+  border: 1px solid var(--border-color);
+}
+
+.rounded {
+  border-radius: 8px;
+}
+
+.rounded-lg {
+  border-radius: 12px;
+}
+
+// Utility Classes
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-row {
+  flex-direction: row;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.p-4 {
+  padding: 16px;
+}
+
+.m-4 {
+  margin: 16px;
+}
+
+.mt-4 {
+  margin-top: 16px;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.ml-4 {
+  margin-left: 16px;
+}
+
+.mr-4 {
+  margin-right: 16px;
+}

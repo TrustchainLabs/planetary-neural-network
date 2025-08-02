@@ -1,0 +1,8 @@
+<div *ngIf="!selectedSession" class="connect-wallet-btn" (click)="connectWallet()">
+  <ion-icon name="wallet-outline"></ion-icon>
+  Connect Wallet
+</div>
+<div *ngIf="selectedSession" class="connected-wallet-btn translucent" (click)="sessionsModal()">
+  {{ selectedSession.wallet }}
+  <ion-icon name="chevron-down-outline"></ion-icon>
+</div>

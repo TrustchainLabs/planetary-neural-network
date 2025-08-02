@@ -1,0 +1,35 @@
+<div class="modal-inner-content">
+  <ion-button class="close-modal" (click)="closeModal()" fill="clear" color="light">
+    <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+  </ion-button>
+
+  <div class="wallet-modal">
+    <div class="header ion-text-center">
+      <h3><b> Connect Wallet </b></h3>
+      <h6>Select a Wallet to connect to Hsuite.</h6>
+    </div>
+
+    <div class="wallet-options">
+      <div class="wallet translucent" (click)="selectWallet('hashpack')">
+        <div class="wallet-info">
+          <h4>HashPack</h4>
+          <p>Hedera native wallet</p>
+        </div>
+      </div>
+
+      <div class="wallet translucent" (click)="selectWallet('blade')">
+        <div class="wallet-info">
+          <h4>Blade Wallet</h4>
+          <p>Multi-chain with Hedera</p>
+        </div>
+      </div>
+
+      <div class="wallet translucent" (click)="selectWallet('metamask')">
+        <div class="wallet-info">
+          <h4>MetaMask</h4>
+          <p>Ethereum wallet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

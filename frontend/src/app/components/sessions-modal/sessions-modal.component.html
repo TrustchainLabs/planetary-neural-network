@@ -1,0 +1,32 @@
+<div class="modal-inner-content">
+  <ion-button class="close-modal" (click)="closeModal()" fill="clear" color="light">
+    <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+  </ion-button>
+
+  <div class="wallet-modal">
+    <div class="header ion-text-center">
+      <h3><b>Choose an Account</b></h3>
+      <h6>Select the account you want to use:</h6>
+    </div>
+
+    <div class="session-list">
+      <div class="session-item" *ngFor="let session of sortedSessions">
+        <ion-item button (click)="selectSession(session)" class="translucent" lines="none" detail="false" [disabled]="session.wallet == selectedSession.wallet">
+          <ion-icon aria-hidden="true" name="wallet-outline" slot="start" [color]="session.wallet == selectedSession.wallet ? 'gray' : 'gray'"></ion-icon>
+          <ion-label>
+            <h2>{{session.wallet}}</h2>
+            <p>{{session.alias ? session.alias : "Hashpack Wallet"}}</p>
+          </ion-label>
+        </ion-item>
+        <ion-icon class="delete-icon" slot="icon-only" name="trash" (click)="closeSession(session)"></ion-icon>
+      </div>
+    </div>
+
+    <div class="add-account-container">
+      <ion-button size="small" (click)="addAccount()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Add Account
+      </ion-button>
+    </div>
+  </div>
+</div>
