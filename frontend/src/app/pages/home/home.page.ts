@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
 import { LoadingOverlayComponent } from '../../components/common/loading-overlay/loading-overlay.component';
 import { LeftNavComponent } from '../../components/navigation/left-nav/left-nav.component';
 import { LeftPanelComponent } from '../../components/left-panel/left-panel.component';
-import { MapComponent } from '../../components/map/map.component';
+import { MapComponent, PurchaseRequest } from '../../components/map/map.component';
 
 @Component({
   selector: 'app-home',
@@ -41,7 +41,12 @@ import { MapComponent } from '../../components/map/map.component';
         <div class="map-container">
           <app-map
             [markerGeojson]="nodeData"
+            [showHexagonGrid]="showHexagonGrid"
+            [ownedHexagons]="ownedHexagons"
+            [hexagonSize]="hexagonSize"
             (markerSelect)="onMarkerSelect($event)"
+            (hexagonPurchase)="onHexagonPurchase($event)"
+            (hexagonRentRequest)="onHexagonRentRequest($event)"
           ></app-map>
         </div>
       </div>
@@ -55,6 +60,11 @@ export class HomePage implements OnInit {
   selectedNode?: Feature;
   selectedTab: TabName = TabName.TEMPERATURE;
 
+  // Hexagon-related properties
+  showHexagonGrid: boolean = true;
+  ownedHexagons: string[] = [];
+  hexagonSize: number = 5;
+
   constructor(
     private authService: AuthService,
     private nodesService: NodesService
@@ -64,6 +74,7 @@ export class HomePage implements OnInit {
 
   ngOnInit() {
     this.loadNodeData();
+    this.loadOwnedHexagons();
   }
 
   async loadNodeData() {
@@ -83,5 +94,69 @@ export class HomePage implements OnInit {
 
   onMarkerSelect(feature?: Feature) {
     this.selectedNode = feature;
+  }
+
+  // Hexagon-related methods
+  onHexagonPurchase(purchaseRequest: PurchaseRequest) {
+    console.log('Processing hexagon purchase:', purchaseRequest);
+
+    // Here you would typically:
+    // 1. Process payment through your backend
+    // 2. Update blockchain/smart contract
+    // 3. Update local state
+
+    // For now, just simulate successful purchase
+    this.simulateHexagonPurchase(purchaseRequest.hexagonId);
+  }
+
+  onHexagonRentRequest(rentRequest: { hexagonId: string; ownerAddress?: string }) {
+    console.log('Processing rent request:', rentRequest);
+
+    // Here you would typically:
+    // 1. Contact the owner
+    // 2. Negotiate rental terms
+    // 3. Process rental payment
+
+    // For demo purposes, just log the request
+    alert(`Rent request sent for Hexagon #${rentRequest.hexagonId}`);
+  }
+
+  private simulateHexagonPurchase(hexagonId: string) {
+    // Simulate successful purchase
+    if (!this.ownedHexagons.includes(hexagonId)) {
+      this.ownedHexagons = [...this.ownedHexagons, hexagonId];
+
+      // Show success message
+      console.log(`Successfully purchased Hexagon #${hexagonId}`);
+
+      // Here you would typically update your backend/blockchain
+      this.updateOwnedHexagonsInBackend();
+    }
+  }
+
+  private loadOwnedHexagons() {
+    // Load owned hexagons from localStorage or backend
+    const stored = localStorage.getItem('ownedHexagons');
+    if (stored) {
+      try {
+        this.ownedHexagons = JSON.parse(stored);
+      } catch (e) {
+        console.error('Error parsing owned hexagons:', e);
+        this.ownedHexagons = [];
+      }
+    }
+
+    // In a real app, you'd load this from your backend:
+    // this.hexagonService.getOwnedHexagons().subscribe(hexagons => {
+    //   this.ownedHexagons = hexagons;
+    // });
+  }
+
+  private updateOwnedHexagonsInBackend() {
+    // Save to localStorage for demo purposes
+    localStorage.setItem('ownedHexagons', JSON.stringify(this.ownedHexagons));
+
+    // In a real app, you'd send this to your backend:
+    // this.hexagonService.updateOwnedHexagons(this.ownedHexagons).subscribe();
   }
 }

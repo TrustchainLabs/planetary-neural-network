@@ -1,14 +1,40 @@
 // Mapbox CSS will be imported globally in angular.json
 
-.container {
+.map-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.map-container {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
   background: var(--background-color);
-  border-radius: 8px;
   overflow: hidden;
+  position: relative;
+
+  // Ensure map canvas and controls are properly rendered
+  canvas {
+    outline: none;
+    pointer-events: auto !important;
+    touch-action: none;
+  }
+
+  // Ensure all mapbox elements are interactive
+  .mapboxgl-map {
+    width: 100% !important;
+    height: 100% !important;
+    pointer-events: auto !important;
+  }
 }
 
 // Global Mapbox popup styles (these need to be global)
@@ -29,6 +55,93 @@
 
 :global(.mapboxgl-ctrl-attrib) {
   display: none !important;
+}
+
+// Style the navigation controls
+:global(.mapboxgl-ctrl-group) {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--background-color) !important;
+  z-index: 1000 !important;
+  pointer-events: auto !important;
+}
+
+:global(.mapboxgl-ctrl-group button) {
+  background: var(--background-color) !important;
+  color: var(--text-color) !important;
+  border: none !important;
+  transition: all 0.2s ease !important;
+}
+
+:global(.mapboxgl-ctrl-group button:hover) {
+  background: var(--primary-color) !important;
+  color: var(--background-color) !important;
+}
+
+:global(.mapboxgl-ctrl-group button:not(:last-child)) {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+// Style the compass/navigation control
+:global(.mapboxgl-ctrl-compass) {
+  background: var(--background-color) !important;
+}
+
+// Style the geolocation control
+:global(.mapboxgl-ctrl-geolocate) {
+  background: var(--background-color) !important;
+  color: var(--text-color) !important;
+}
+
+:global(.mapboxgl-ctrl-geolocate:hover) {
+  background: var(--primary-color) !important;
+  color: var(--background-color) !important;
+}
+
+// Style the fullscreen control
+:global(.mapboxgl-ctrl-fullscreen) {
+  background: var(--background-color) !important;
+  color: var(--text-color) !important;
+}
+
+:global(.mapboxgl-ctrl-fullscreen:hover) {
+  background: var(--primary-color) !important;
+  color: var(--background-color) !important;
+}
+
+// Style the scale control
+:global(.mapboxgl-ctrl-scale) {
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  margin: 10px !important;
+  z-index: 1000 !important;
+  pointer-events: auto !important;
+}
+
+// Ensure map canvas is fully interactive
+:global(.mapboxgl-canvas) {
+  cursor: grab !important;
+  outline: none !important;
+
+  &:active {
+    cursor: grabbing !important;
+  }
+}
+
+// Ensure all Mapbox controls are interactive
+:global(.mapboxgl-ctrl) {
+  pointer-events: auto !important;
+  z-index: 1000 !important;
+}
+
+// Fix any potential CSS conflicts
+:global(.mapboxgl-map) {
+  font-family: inherit !important;
 }
 
 :global(.popup) {
@@ -93,5 +206,167 @@
       color: var(--primary-color);
       text-align: right;
     }
+  }
+}
+
+// Map Controls - Right Side
+.map-controls-right {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+
+  ion-button {
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --border-radius: 8px;
+    --background: var(--background-color);
+    --color: var(--text-color);
+    backdrop-filter: blur(10px);
+
+    &[color="primary"] {
+      --background: var(--primary-color);
+      --color: var(--background-color);
+    }
+
+    &[color="medium"] {
+      --background: rgba(var(--background-color-rgb), 0.9);
+      --color: var(--text-color);
+      --border-color: var(--border-color);
+      border: 1px solid var(--border-color);
+    }
+
+    ion-icon {
+      font-size: 16px;
+    }
+  }
+}
+
+// Hexagon Info Panel - Right Side
+.hexagon-info-panel {
+  position: fixed;
+  top: 120px;
+  right: 20px;
+  z-index: 1001;
+  pointer-events: auto;
+  max-width: 280px;
+
+  .panel-content {
+    background: var(--background-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(15px);
+    font-family: 'Inter', sans-serif;
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text-color);
+
+      ion-icon {
+        font-size: 20px;
+        color: var(--primary-color);
+      }
+    }
+
+    .panel-details {
+      margin-bottom: 16px;
+
+      .price {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 8px;
+      }
+
+      .status {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+
+        &.available {
+          background: rgba(0, 128, 255, 0.15);
+          color: #0080ff;
+          border: 1px solid #0080ff;
+        }
+
+        &.owned {
+          background: rgba(0, 255, 0, 0.15);
+          color: #00aa00;
+          border: 1px solid #00aa00;
+        }
+      }
+    }
+
+    .panel-actions {
+      ion-button {
+        --border-radius: 8px;
+        width: 100%;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// Responsive adjustments for mobile
+@media (max-width: 768px) {
+  .map-controls-right {
+    top: 10px;
+    right: 10px;
+
+    ion-button {
+      font-size: 12px;
+
+      ion-icon {
+        font-size: 14px;
+      }
+    }
+  }
+
+  .hexagon-info-panel {
+    top: 100px;
+    right: 10px;
+    max-width: 260px;
+
+    .panel-content {
+      padding: 12px;
+
+      .panel-header {
+        font-size: 14px;
+
+        ion-icon {
+          font-size: 18px;
+        }
+      }
+
+      .panel-details .price {
+        font-size: 18px;
+      }
+    }
+  }
+}
+
+// Dark mode specific adjustments
+@media (prefers-color-scheme: dark) {
+  .map-controls-right ion-button {
+    --background: rgba(var(--background-color-rgb), 0.95);
+    backdrop-filter: blur(15px);
+  }
+
+  .hexagon-info-panel .panel-content {
+    background: rgba(var(--background-color-rgb), 0.95);
+    backdrop-filter: blur(15px);
   }
 }

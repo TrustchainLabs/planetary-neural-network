@@ -6,7 +6,7 @@ export const APP_CONSTANTS = {
   APP_DESCRIPTION: 'Ecosphere Hyper-local Climate Intelligence Oracle'
 };
 
-export const MAPBOX_ACCESS_TOKEN = 'your_mapbox_token_here';
+export const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiamFzaW0tcHV0aHVjaGVhcnkiLCJhIjoiY200YjYwNThrMDA5bTJpczQyY2F1ZWViYiJ9.jzdLPIpEclJStKmiAIg_HQ';
 export const HASHSCAN_URL = 'https://hashscan.io';
 
 export const GUEST_EMAIL = 'guest@example.com';
