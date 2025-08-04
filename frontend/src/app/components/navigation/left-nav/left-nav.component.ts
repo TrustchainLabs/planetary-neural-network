@@ -36,42 +36,6 @@ import { TabName } from '../../../shared/enums';
         ></app-tab>
 
         <app-tab
-          [name]="TabName.ATM_PRESSURE"
-          tooltip="Atm Pressure"
-          src="assets/icons/gauge.svg"
-          alt="Gauge"
-          [active]="selectedTab === TabName.ATM_PRESSURE"
-          (tabClick)="onTabSelect($event)"
-        ></app-tab>
-
-        <app-tab
-          [name]="TabName.WIND_SPEED"
-          tooltip="Wind Speed"
-          src="assets/icons/wind.svg"
-          alt="Wind"
-          [active]="selectedTab === TabName.WIND_SPEED"
-          (tabClick)="onTabSelect($event)"
-        ></app-tab>
-
-        <app-tab
-          [name]="TabName.WIND_DIRECTION"
-          tooltip="Wind Direction"
-          src="assets/icons/compass.svg"
-          alt="Compass"
-          [active]="selectedTab === TabName.WIND_DIRECTION"
-          (tabClick)="onTabSelect($event)"
-        ></app-tab>
-
-        <app-tab
-          [name]="TabName.AIR_QUALITY"
-          tooltip="Air Quality"
-          src="assets/icons/airwave.svg"
-          alt="Airwave"
-          [active]="selectedTab === TabName.AIR_QUALITY"
-          (tabClick)="onTabSelect($event)"
-        ></app-tab>
-
-        <app-tab
           className="add-device"
           [name]="TabName.ADD_DEVICE"
           tooltip="Add Device"

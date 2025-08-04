@@ -121,14 +121,8 @@ export class LeftPanelContentComponent implements OnInit, OnChanges {
     switch (this.selectedTab) {
       case TabName.TEMPERATURE:
         return 'Temperature';
-      case TabName.ATM_PRESSURE:
-        return 'Atmospheric Pressure';
-      case TabName.WIND_SPEED:
-        return 'Wind Speed';
-      case TabName.WIND_DIRECTION:
-        return 'Wind Direction';
-      case TabName.AIR_QUALITY:
-        return 'Air Quality';
+      case TabName.ADD_DEVICE:
+        return 'Add Device';
       default:
         return 'Climate Data';
     }
@@ -148,14 +142,6 @@ export class LeftPanelContentComponent implements OnInit, OnChanges {
     switch (this.selectedTab) {
       case TabName.TEMPERATURE:
         return measurement.temperature ? formatTemperature(measurement.temperature.value) : 'N/A';
-      case TabName.ATM_PRESSURE:
-        return measurement.atmPressure ? formatPressure(measurement.atmPressure.value) : 'N/A';
-      case TabName.WIND_SPEED:
-        return measurement.windSpeed ? formatWindSpeed(measurement.windSpeed.value) : 'N/A';
-      case TabName.WIND_DIRECTION:
-        return measurement.windDirection ? formatWindDirection(measurement.windDirection.value) : 'N/A';
-      case TabName.AIR_QUALITY:
-        return measurement.airQuality ? formatAirQuality(measurement.airQuality.value) : 'N/A';
       default:
         return 'N/A';
     }
@@ -208,14 +194,6 @@ export class LeftPanelContentComponent implements OnInit, OnChanges {
     switch (this.selectedTab) {
       case TabName.TEMPERATURE:
         return measurement.temperature || 0;
-      case TabName.ATM_PRESSURE:
-        return measurement.atmPressure || 0;
-      case TabName.WIND_SPEED:
-        return measurement.windSpeed || 0;
-      case TabName.WIND_DIRECTION:
-        return measurement.windDirection || 0;
-      case TabName.AIR_QUALITY:
-        return measurement.airQuality || 0;
       default:
         return 0;
     }

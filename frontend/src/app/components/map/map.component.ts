@@ -220,16 +220,20 @@ export class MapComponent implements OnInit, OnDestroy {
       console.log('Loaded medallions:', this.medallions.length);
       console.log('Loaded devices:', this.devices.length);
 
-      // Update hexagon grid with real data
-      if (this.showHexagonGrid && this.map) {
+      // Generate hexagon grid data (this doesn't require the map to be loaded)
+      if (this.showHexagonGrid) {
         this.generateHexagonGridFromMedallions();
-        this.addHexagonGridToMap();
-        this.setupHexagonEventHandlers();
       }
 
       // Add device markers to map (only if map is ready)
-      if (this.map) {
+      if (this.map && this.map.isStyleLoaded()) {
         this.addDeviceMarkers();
+
+        // Add hexagon grid if map is ready
+        if (this.showHexagonGrid && this.hexagonGrid) {
+          this.addHexagonGridToMap();
+          this.setupHexagonEventHandlers();
+        }
       }
 
     } catch (error) {
@@ -521,6 +525,12 @@ export class MapComponent implements OnInit, OnDestroy {
       // Add device markers if data is already loaded
       if (this.devices && this.devices.length > 0 && this.medallions && this.medallions.length > 0) {
         this.addDeviceMarkers();
+      }
+
+      // Add hexagon grid if data is already loaded and grid is enabled
+      if (this.showHexagonGrid && this.hexagonGrid && this.medallions && this.medallions.length > 0) {
+        this.addHexagonGridToMap();
+        this.setupHexagonEventHandlers();
       }
 
       if (this.markerGeojson) {
@@ -816,6 +826,14 @@ export class MapComponent implements OnInit, OnDestroy {
 
   private addHexagonGridToMap() {
     if (!this.hexagonGrid) return;
+
+    // Check if map style is loaded
+    if (!this.map.isStyleLoaded()) {
+      console.warn('Map style not loaded yet, deferring hexagon grid addition');
+      // Retry after a short delay
+      setTimeout(() => this.addHexagonGridToMap(), 100);
+      return;
+    }
 
     // Safely remove existing layers
     [this.hexagonLabelLayerId, this.hexagonOutlineLayerId, this.hexagonFillLayerId].forEach(layerId => {
