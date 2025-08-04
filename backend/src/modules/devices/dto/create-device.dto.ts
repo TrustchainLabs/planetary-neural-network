@@ -7,6 +7,11 @@ export class CreateDeviceDto {
   @IsNotEmpty()
   name: string;
 
+  @ApiProperty({ description: 'Hex ID of the medallion where the device will be placed', example: 'hex_lat40_7128_lng-74_0060' })
+  @IsString()
+  @IsNotEmpty()
+  hexId: string;
+
   @ApiProperty({ description: 'Owner of the device' })
   @IsOptional()
   @IsString()

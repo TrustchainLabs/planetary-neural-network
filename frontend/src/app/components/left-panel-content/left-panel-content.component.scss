@@ -53,8 +53,8 @@
 
 .node-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
   padding: 16px;
   background: var(--content-background-color);
   border: 1px solid var(--border-color);
@@ -76,6 +76,35 @@
     }
   }
 
+  .device-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(var(--primary-color-rgb), 0.05);
+    border-radius: 6px;
+    border: 1px solid rgba(var(--primary-color-rgb), 0.1);
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-color);
+
+      ion-icon {
+        font-size: 14px;
+        color: var(--primary-color);
+        opacity: 0.8;
+      }
+
+      span {
+        font-family: 'Courier New', monospace;
+        opacity: 0.9;
+      }
+    }
+  }
+
   .latest-measurement {
     text-align: right;
 
@@ -90,6 +119,23 @@
       color: var(--text-color);
       font-size: 12px;
       opacity: 0.6;
+    }
+  }
+
+  .no-measurement {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(var(--warning-color-rgb), 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(var(--warning-color-rgb), 0.2);
+    color: var(--warning-color);
+    font-size: 12px;
+    opacity: 0.8;
+
+    ion-icon {
+      font-size: 14px;
     }
   }
 }

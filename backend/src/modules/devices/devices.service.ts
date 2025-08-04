@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, NotFoundException, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { CreateDeviceDto } from './dto/create-device.dto';
@@ -6,17 +6,54 @@ import { UpdateDeviceDto } from './dto/update-device.dto';
 import { ReadDevicesDto } from './dto/read-device.dto'
 import { Device } from './entities/device.entity';
 import { DeviceModelService } from './devices.model.service';
+import { GeoMedallionsService } from '../geo-medallions/geo-medallions.service';
 
 @Injectable()
 export class DevicesService  {
 
   constructor(
     private readonly deviceModelService: DeviceModelService,
+    private readonly geoMedallionsService: GeoMedallionsService,
     @InjectQueue('device') private readonly deviceQueue: Queue
   ) {}
 
   async create(createDeviceDto: CreateDeviceDto): Promise<Device> {
+    // Validate medallion exists and is available
+    try {
+      const medallion = await this.geoMedallionsService.findOne(createDeviceDto.hexId);
+      
+      if (!medallion.available) {
+        throw new BadRequestException(`Medallion ${createDeviceDto.hexId} is not available for device placement`);
+      }
+
+      // Check if medallion is owned (not required but recommended)
+      if (!medallion.ownerAddress) {
+        console.warn(`Warning: Placing device on unowned medallion ${createDeviceDto.hexId}`);
+      }
+
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new BadRequestException(`Medallion ${createDeviceDto.hexId} not found`);
+      }
+      throw error;
+    }
+
+    // Create the device
     const device = await this.deviceModelService.create(createDeviceDto);
+    
+    // Update medallion with device data
+    try {
+      await this.geoMedallionsService.addDeviceToMedallion(createDeviceDto.hexId, {
+        deviceId: device.deviceId,
+        name: device.name,
+        ownerAddress: device.ownerAddress,
+        createdAt: new Date()
+      });
+    } catch (error) {
+      console.error(`Failed to update medallion ${createDeviceDto.hexId} with device data:`, error);
+      // Continue with device creation even if medallion update fails
+    }
+
     const job = await this.deviceQueue.add('process-device-creation', {
       deviceId: device.deviceId,
       ownerAddress: device.ownerAddress
@@ -76,10 +113,27 @@ export class DevicesService  {
   }
 
   async remove(id: string, ownerId: string): Promise<Device> {
+    // Get device before removal to access hexId
+    const deviceToRemove = await this.deviceModelService.findOne(id);
+    if (!deviceToRemove) {
+      throw new NotFoundException('Device not found');
+    }
+
     const removedDevice = await this.deviceModelService.remove(id);
     if (!removedDevice) {
       throw new NotFoundException('Device not found');
     }
+
+    // Remove device from medallion
+    if (deviceToRemove.hexId) {
+      try {
+        await this.geoMedallionsService.removeDeviceFromMedallion(deviceToRemove.hexId, id);
+      } catch (error) {
+        console.error(`Failed to remove device ${id} from medallion ${deviceToRemove.hexId}:`, error);
+        // Continue with device removal even if medallion update fails
+      }
+    }
+
     return removedDevice;
   }
 }

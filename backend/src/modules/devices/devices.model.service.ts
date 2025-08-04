@@ -33,6 +33,7 @@ export class DeviceModelService {
     const device = new this.deviceModel({
       deviceId,
       name: createDeviceDto.name,
+      hexId: createDeviceDto.hexId,
       ownerAddress: createDeviceDto.owner || 'anonymous'
     });
 

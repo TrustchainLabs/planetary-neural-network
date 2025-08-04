@@ -2,16 +2,31 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, 
 import { CommonModule } from '@angular/common';
 import { IonicModule, AlertController } from '@ionic/angular';
 import { FeatureCollection, Feature } from '../../shared/types';
+import { GeometryType } from '../../shared/enums';
 import { MAPBOX_CONFIG, HASHSCAN_URL } from '../../shared/constants';
+import { GeoMedallionsService, GeoMedallion, PurchaseMedallionRequest } from '../../shared/services/geo-medallions.service';
+import { NodesService, Device } from '../../shared/services/nodes.service';
+import { MeasurementsService } from '../../shared/services/measurements.service';
 import * as turf from '@turf/turf';
-// Hexagon-related interfaces
+
+// Hexagon-related interfaces (updated to match backend data)
 export interface HexagonData {
   id: string;
+  hexId: string;
   center: [number, number]; // [lng, lat]
   vertices: [number, number][]; // Array of [lng, lat] coordinates
   isOwned: boolean;
   owner?: string;
   price?: number;
+  available: boolean;
+  nftTokenId?: string;
+  devices?: Array<{
+    deviceId: string;
+    name: string;
+    ownerAddress: string;
+    createdAt: string;
+  }>;
+  medallion?: GeoMedallion; // Reference to full medallion data
 }
 
 export interface GridBounds {
@@ -36,7 +51,13 @@ import * as mapboxgl from 'mapbox-gl';
     <div class="map-wrapper">
       <div #mapContainer id="map" class="map-container"></div>
 
-            <!-- Map Controls - Right Side -->
+      <!-- Loading Indicator -->
+      <div class="loading-overlay" *ngIf="isLoading">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Loading medallions and devices...</p>
+      </div>
+
+      <!-- Map Controls - Right Side -->
       <div class="map-controls-right">
         <ion-button
           fill="solid"
@@ -58,30 +79,51 @@ import * as mapboxgl from 'mapbox-gl';
       </div>
 
       <!-- Hexagon Info Panel - Right Side -->
-      <div class="hexagon-info-panel" *ngIf="hoveredHexagon">
-        <div class="panel-content">
-          <div class="panel-header">
-            <ion-icon name="hexagon-outline"></ion-icon>
-            <span>{{ hoveredHexagon.id }}</span>
-          </div>
-          <div class="panel-details">
-            <div class="price">{{ hoveredHexagon.price || 100 }} HBAR</div>
-            <div class="status" [ngClass]="hoveredHexagon.isOwned ? 'owned' : 'available'">
-              {{ hoveredHexagon.isOwned ? 'Owned' : 'Available' }}
-            </div>
-          </div>
-          <div class="panel-actions">
-            <ion-button
-              fill="solid"
-              size="small"
-              color="primary"
-              (click)="onHexagonClick(hoveredHexagon)"
-              [disabled]="hoveredHexagon.isOwned">
-              {{ hoveredHexagon.isOwned ? 'Owned' : 'Purchase' }}
-            </ion-button>
-          </div>
-        </div>
+<div class="hexagon-info-panel" *ngIf="selectedHexagonData">
+  <div class="panel-content">
+    <div class="panel-header">
+      <ion-icon name="hexagon-outline"></ion-icon>
+      <span>{{ selectedHexagonData.hexId }}</span>
+    </div>
+    <div class="panel-details">
+      <div class="price">{{ selectedHexagonData.price || 1 }} HBAR</div>
+      <div class="status" [ngClass]="selectedHexagonData.isOwned ? 'owned' : (selectedHexagonData.available ? 'available' : 'unavailable')">
+        {{ selectedHexagonData.isOwned ? 'Owned' : (selectedHexagonData.available ? 'Available' : 'Unavailable') }}
       </div>
+      <div class="devices-info" *ngIf="selectedHexagonData.devices && selectedHexagonData.devices.length > 0">
+        <ion-icon name="hardware-chip-outline"></ion-icon>
+        <span>{{ selectedHexagonData.devices.length }} device(s)</span>
+      </div>
+      <div class="owner-info" *ngIf="selectedHexagonData.owner">
+        <small>Owner: {{ selectedHexagonData.owner }}</small>
+      </div>
+    </div>
+    <div class="panel-actions">
+      <ion-button
+        *ngIf="!selectedHexagonData.isOwned && selectedHexagonData.available"
+        fill="solid"
+        size="small"
+        color="primary"
+        (click)="openPurchaseModal(selectedHexagonData)">
+        Purchase
+      </ion-button>
+      <ion-button
+        *ngIf="selectedHexagonData.isOwned"
+        fill="outline"
+        size="small"
+        color="secondary"
+        (click)="openPurchaseModal(selectedHexagonData)">
+        Request Rental
+      </ion-button>
+      <ion-button
+        fill="clear"
+        size="small"
+        (click)="selectedHexagonData = undefined">
+        Close
+      </ion-button>
+    </div>
+  </div>
+</div>
 
       <!-- Hexagonal Grid Component -->
       <!-- Will be added programmatically via the component logic -->
@@ -109,12 +151,18 @@ export class MapComponent implements OnInit, OnDestroy {
 
   public map!: mapboxgl.Map;
   private markers: mapboxgl.Marker[] = [];
+  private deviceMarkers: mapboxgl.Marker[] = [];
 
   // Hexagon-related properties
   selectedHexagon?: string;
   selectedHexagonData?: HexagonData;
   hoveredHexagon?: HexagonData;
   popupPosition = { x: 0, y: 0 };
+
+  // Data properties
+  medallions: GeoMedallion[] = [];
+  devices: Device[] = [];
+  isLoading = false;
 
     // Expanded bounds for Greater Kuala Lumpur area
   gridBounds: GridBounds = {
@@ -136,16 +184,251 @@ export class MapComponent implements OnInit, OnDestroy {
   private isFixedGrid = true;
   private readonly KL_CENTER = { lat: 3.1319, lng: 101.6841 }; // Kuala Lumpur center
 
-  constructor(private alertController: AlertController) {}
+  constructor(
+    private alertController: AlertController,
+    private geoMedallionsService: GeoMedallionsService,
+    private nodesService: NodesService,
+    private measurementsService: MeasurementsService
+  ) {}
 
   ngOnInit() {
     this.initializeMap();
+    this.loadData();
   }
 
   ngOnDestroy() {
     if (this.map) {
       this.map.remove();
     }
+  }
+
+  /**
+   * Load medallions and devices from the backend
+   */
+  private async loadData() {
+    this.isLoading = true;
+    try {
+      // Load medallions and devices in parallel
+      const [medallionsResponse, devices] = await Promise.all([
+        this.geoMedallionsService.getMedallions({ limit: 1000 }).toPromise(),
+        this.nodesService.getDevices({ includeLatestMeasurement: true }).toPromise()
+      ]);
+
+      this.medallions = medallionsResponse?.data || [];
+      this.devices = devices || [];
+
+      console.log('Loaded medallions:', this.medallions.length);
+      console.log('Loaded devices:', this.devices.length);
+
+      // Update hexagon grid with real data
+      if (this.showHexagonGrid && this.map) {
+        this.generateHexagonGridFromMedallions();
+        this.addHexagonGridToMap();
+        this.setupHexagonEventHandlers();
+      }
+
+      // Add device markers to map (only if map is ready)
+      if (this.map) {
+        this.addDeviceMarkers();
+      }
+
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  /**
+   * Generate hexagon grid from backend medallion data
+   */
+  private generateHexagonGridFromMedallions() {
+    if (!this.medallions?.length) {
+      console.warn('No medallions data available');
+      return;
+    }
+
+    // Create GeoJSON features from medallion data
+    const features = this.medallions.map(medallion => {
+      // Convert vertices from lat/lng objects to [lng, lat] coordinate arrays
+      const coordinates = medallion.vertices.map(vertex => [vertex.longitude, vertex.latitude]);
+      // Close the polygon by adding the first point at the end
+      coordinates.push(coordinates[0]);
+
+      return {
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Polygon' as const,
+          coordinates: [coordinates]
+        },
+        properties: {
+          id: medallion.hexId,
+          hexId: medallion.hexId,
+          isOwned: !!medallion.ownerAddress,
+          isSelected: false,
+          price: medallion.price,
+          available: medallion.available,
+          ownerAddress: medallion.ownerAddress,
+          nftTokenId: medallion.nftTokenId,
+          deviceCount: medallion.devices?.length || 0
+        }
+      };
+    });
+
+    this.hexagonGrid = {
+      type: 'FeatureCollection' as const,
+      features
+    };
+
+    // Create hexagon data for internal tracking
+    this.hexagons = this.medallions.map(medallion => ({
+      id: medallion.hexId,
+      hexId: medallion.hexId,
+      center: [medallion.center.longitude, medallion.center.latitude], // [lng, lat]
+      vertices: medallion.vertices.map(v => [v.longitude, v.latitude] as [number, number]),
+      isOwned: !!medallion.ownerAddress,
+      owner: medallion.ownerAddress,
+      price: medallion.price,
+      available: medallion.available,
+      nftTokenId: medallion.nftTokenId,
+      devices: medallion.devices,
+      medallion: medallion
+    }));
+
+    console.log(`Generated ${this.hexagons.length} hexagons from medallion data`);
+  }
+
+  /**
+   * Add device markers to the map
+   */
+  private addDeviceMarkers() {
+    // Remove existing device markers
+    this.removeDeviceMarkers();
+
+    if (!this.devices?.length) {
+      console.log('No devices to display');
+      return;
+    }
+
+    this.devices.forEach(device => {
+      // Find the medallion for this device to get its location
+      const medallion = this.medallions.find(m => m.hexId === device.hexId);
+      if (!medallion) {
+        console.warn(`No medallion found for device ${device.deviceId} with hexId ${device.hexId}`);
+        return;
+      }
+
+      // Validate medallion coordinates
+      if (!medallion.center ||
+          isNaN(medallion.center.latitude) ||
+          isNaN(medallion.center.longitude)) {
+        console.warn(`Invalid coordinates for medallion ${medallion.hexId}:`, medallion.center);
+        return;
+      }
+
+      console.log(`Creating device marker for ${device.name} at medallion ${medallion.hexId}:`,
+                  medallion.center.latitude, medallion.center.longitude);
+
+      // Create device marker at medallion center (could be offset slightly for multiple devices)
+      const marker = this.createDeviceMarker(device, medallion);
+      marker.addTo(this.map);
+      this.deviceMarkers.push(marker);
+    });
+
+    console.log(`Added ${this.deviceMarkers.length} device markers`);
+  }
+
+  /**
+   * Create a device marker
+   */
+  private createDeviceMarker(device: Device, medallion: GeoMedallion): mapboxgl.Marker {
+    // Create device marker element
+    const markerEl = document.createElement('div');
+    markerEl.className = 'device-marker';
+    markerEl.innerHTML = `
+      <div class="device-icon">
+        <img src="assets/images/brand-logo.svg" alt="Device" width="24" height="24" />
+      </div>
+    `;
+    markerEl.style.cssText = `
+      width: 32px;
+      height: 32px;
+      background:rgb(12, 213, 19);
+      border: 2px solid white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+
+    markerEl.onclick = async () => {
+      console.log('Device clicked:', device);
+
+      // Try to get latest measurement for this device
+      let latestMeasurement = null;
+      try {
+        const now = new Date();
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+        const measurements = await this.measurementsService.getMeasurements({
+          deviceId: device.deviceId,
+          startDate: oneDayAgo.toISOString(),
+          endDate: now.toISOString()
+        }).toPromise();
+
+        if (measurements && measurements.length > 0) {
+          // Get the most recent measurement
+          latestMeasurement = measurements[measurements.length - 1];
+        }
+      } catch (error) {
+        console.warn('Could not fetch latest measurement for device:', device.deviceId, error);
+      }
+
+      // Format device data as a Feature object that the left panel expects
+      const deviceFeature: Feature = {
+        type: 'Feature',
+        geometry: {
+          type: GeometryType.POINT,
+          coordinates: [medallion.center.longitude, medallion.center.latitude, 0]
+        },
+        properties: {
+          // Standard Feature properties that the left panel expects
+          id: device.deviceId,
+          uuid: device.deviceId,
+          name: device.name,
+          hederaAccount: device.hederaAccount,
+
+          // Device-specific properties
+          deviceId: device.deviceId,
+          hexId: device.hexId,
+          ownerAddress: device.ownerAddress,
+          medallion: medallion,
+
+          // Include latest measurement if available
+          latestMeasurement: latestMeasurement,
+
+          // Add coordinates for display
+          latitude: medallion.center.latitude,
+          longitude: medallion.center.longitude
+        }
+      };
+
+      // Emit device selection event
+      this.markerSelect.emit(deviceFeature);
+    };
+
+    return new mapboxgl.Marker(markerEl, { offset: [0, -16] })
+      .setLngLat([medallion.center.longitude, medallion.center.latitude])
+  }
+
+  /**
+   * Remove device markers from map
+   */
+  private removeDeviceMarkers() {
+    this.deviceMarkers.forEach(marker => marker.remove());
+    this.deviceMarkers = [];
   }
 
   @HostListener('window:resize', ['$event'])
@@ -158,8 +441,22 @@ export class MapComponent implements OnInit, OnDestroy {
   }
 
   ngOnChanges() {
-    if (this.map && this.markerGeojson) {
-      this.addMarkers(this.markerGeojson);
+    if (this.map && this.markerGeojson && this.markerGeojson.features) {
+      // Only add traditional measurement markers if they have valid geometry
+      const validFeatures = this.markerGeojson.features.filter(feature =>
+        feature.geometry &&
+        feature.geometry.coordinates &&
+        feature.geometry.coordinates.length >= 2 &&
+        !isNaN(feature.geometry.coordinates[0]) &&
+        !isNaN(feature.geometry.coordinates[1])
+      );
+
+      if (validFeatures.length > 0) {
+        this.addMarkers({
+          type: 'FeatureCollection',
+          features: validFeatures
+        });
+      }
     }
   }
 
@@ -221,13 +518,27 @@ export class MapComponent implements OnInit, OnDestroy {
     this.map.on('load', () => {
       console.log('Map loaded successfully');
 
-      if (this.markerGeojson) {
-        this.addMarkers(this.markerGeojson);
+      // Add device markers if data is already loaded
+      if (this.devices && this.devices.length > 0 && this.medallions && this.medallions.length > 0) {
+        this.addDeviceMarkers();
       }
 
-      // Initialize fixed hexagon grid if enabled
-      if (this.showHexagonGrid) {
-        this.initializeHexagonGrid();
+      if (this.markerGeojson) {
+        // Only add traditional measurement markers if they have valid geometry
+        const validFeatures = this.markerGeojson.features.filter(feature =>
+          feature.geometry &&
+          feature.geometry.coordinates &&
+          feature.geometry.coordinates.length >= 2 &&
+          !isNaN(feature.geometry.coordinates[0]) &&
+          !isNaN(feature.geometry.coordinates[1])
+        );
+
+        if (validFeatures.length > 0) {
+          this.addMarkers({
+            type: 'FeatureCollection',
+            features: validFeatures
+          });
+        }
       }
 
       // Ensure map fills the container properly
@@ -440,9 +751,11 @@ export class MapComponent implements OnInit, OnDestroy {
       // Create hexagon data for our internal tracking
       const hexagonData: HexagonData = {
         id: hexId,
+        hexId: hexId,
         center: [lng, lat],
         vertices: feature.geometry.coordinates[0],
         isOwned: this.ownedHexagons.includes(hexId),
+        available: !this.ownedHexagons.includes(hexId),
         price: this.calculateKLHexagonPrice(lat, lng, index)
       };
 
@@ -612,30 +925,21 @@ export class MapComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Hover handlers for fill layer (entire hexagon area)
-    this.map.on('mouseenter', this.hexagonFillLayerId, (e) => {
-      this.map.getCanvas().style.cursor = 'pointer';
-
+    this.map.on('mousemove', this.hexagonFillLayerId, (e) => {
       if (e.features && e.features.length > 0) {
         const feature = e.features[0];
         const hexagonId = feature.properties?.['id'];
         const hexagon = this.hexagons.find(h => h.id === hexagonId);
-
-        if (hexagon) {
-          // Show labels and add hover effect
+        if (hexagon && this.hoveredHexagon?.id !== hexagonId) {
+          this.onHexagonHover(hexagon);
           this.showHexagonLabel(hexagonId);
           this.addHoverEffect(hexagonId);
-          this.onHexagonHover(hexagon);
         }
+      } else {
+        this.onHexagonHover(null);
+        this.hideHexagonLabels();
+        this.removeHoverEffect();
       }
-    });
-
-    this.map.on('mouseleave', this.hexagonFillLayerId, () => {
-      this.map.getCanvas().style.cursor = '';
-      // Hide labels and remove hover effect
-      this.hideHexagonLabels();
-      this.removeHoverEffect();
-      this.onHexagonHover(null);
     });
   }
 
@@ -671,10 +975,15 @@ export class MapComponent implements OnInit, OnDestroy {
   toggleHexagonGrid() {
     this.showHexagonGrid = !this.showHexagonGrid;
     if (this.showHexagonGrid) {
-      // Initialize fixed KL hexagon grid
-      this.initializeHexagonGrid();
-      // Center map on KL
-      this.centerMapOnKL();
+      // Generate hexagon grid from loaded medallion data
+      if (this.medallions.length > 0) {
+        this.generateHexagonGridFromMedallions();
+        this.addHexagonGridToMap();
+        this.setupHexagonEventHandlers();
+      } else {
+        // Load data first if not already loaded
+        this.loadData();
+      }
     } else {
       // Hide and clean up
       this.removeHexagonGridFromMap();
@@ -694,14 +1003,6 @@ export class MapComponent implements OnInit, OnDestroy {
     console.log('Hexagon clicked:', hexagon);
     this.selectedHexagon = hexagon.id;
     this.selectedHexagonData = hexagon;
-
-    // If the hexagon is available, open purchase modal
-    if (!hexagon.isOwned) {
-      this.openPurchaseModal(hexagon);
-    } else {
-      // If owned, show rental options
-      this.openPurchaseModal(hexagon);
-    }
   }
 
   onHexagonHover(hexagon: HexagonData | null) {
@@ -758,14 +1059,33 @@ export class MapComponent implements OnInit, OnDestroy {
 
   private async showPurchaseDialog(hexagon: HexagonData) {
     const alert = await this.alertController.create({
-      header: `Purchase Hexagon #${hexagon.id}`,
+      header: `Purchase Medallion ${hexagon.hexId}`,
       message: `
         <div style="text-align: center;">
+          <p><strong>Hex ID:</strong> ${hexagon.hexId}</p>
           <p><strong>Location:</strong> ${hexagon.center[1].toFixed(4)}, ${hexagon.center[0].toFixed(4)}</p>
-          <p><strong>Price:</strong> ${hexagon.price || 100} HBAR</p>
-          <p><strong>Status:</strong> Available</p>
+          <p><strong>Price:</strong> ${hexagon.price || 1} HBAR</p>
+          <p><strong>Status:</strong> ${hexagon.available ? 'Available' : 'Unavailable'}</p>
+          ${hexagon.devices && hexagon.devices.length > 0 ?
+            `<p><strong>Devices:</strong> ${hexagon.devices.length} device(s)</p>` :
+            '<p><strong>Devices:</strong> None</p>'
+          }
         </div>
       `,
+      inputs: [
+        {
+          name: 'buyerAddress',
+          type: 'text',
+          placeholder: 'Your wallet address (0.0.xxxxx)',
+          value: ''
+        },
+        {
+          name: 'transactionId',
+          type: 'text',
+          placeholder: 'Payment transaction ID',
+          value: ''
+        }
+      ],
       buttons: [
         {
           text: 'Cancel',
@@ -773,15 +1093,68 @@ export class MapComponent implements OnInit, OnDestroy {
         },
         {
           text: 'Purchase',
-          handler: () => {
-            const purchaseRequest: PurchaseRequest = {
-              hexagonId: hexagon.id,
-              paymentMethod: 'wallet'
-            };
-            this.hexagonPurchase.emit(purchaseRequest);
+          handler: async (data) => {
+            if (!data.buyerAddress || !data.transactionId) {
+              console.error('Buyer address and transaction ID are required');
+              return false;
+            }
+
+            try {
+              const purchaseRequest: PurchaseMedallionRequest = {
+                buyerAddress: data.buyerAddress,
+                paymentTransactionId: data.transactionId
+              };
+
+              console.log('Purchasing medallion:', hexagon.hexId, purchaseRequest);
+              const result = await this.geoMedallionsService.purchaseMedallion(hexagon.hexId, purchaseRequest).toPromise();
+
+              if (result) {
+                console.log('Purchase successful:', result);
+                await this.showPurchaseSuccessDialog(result);
+                // Reload data to reflect the purchase
+                this.loadData();
+              }
+            } catch (error) {
+              console.error('Purchase failed:', error);
+              await this.showPurchaseErrorDialog(error);
+            }
+
+            return true;
           }
         }
       ]
+    });
+
+    await alert.present();
+  }
+
+  private async showPurchaseSuccessDialog(result: any) {
+    const alert = await this.alertController.create({
+      header: 'Purchase Successful!',
+      message: `
+        <div style="text-align: center;">
+          <p><strong>Status:</strong> ${result.status}</p>
+          <p><strong>Message:</strong> ${result.message}</p>
+          <p><strong>Job ID:</strong> ${result.jobId}</p>
+          <p>Your NFT is being minted. This may take a few minutes to complete.</p>
+        </div>
+      `,
+      buttons: ['OK']
+    });
+
+    await alert.present();
+  }
+
+  private async showPurchaseErrorDialog(error: any) {
+    const alert = await this.alertController.create({
+      header: 'Purchase Failed',
+      message: `
+        <div style="text-align: center;">
+          <p><strong>Error:</strong> ${error.error?.message || error.message || 'Unknown error'}</p>
+          <p>Please check your transaction ID and try again.</p>
+        </div>
+      `,
+      buttons: ['OK']
     });
 
     await alert.present();

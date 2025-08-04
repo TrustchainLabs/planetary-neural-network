@@ -53,9 +53,9 @@ import { SmartConfigModule, SmartConfigService } from '@hsuite/smart-config';
 import { BullModule } from '@nestjs/bull';
 
 // Import our new modules
-import { DaoModule } from './modules/daos/dao.module';
 import { DevicesModule } from './modules/devices/devices.module';
 import { ConfigsModule } from './modules/config/config.module';
+import { GeoMedallionsModule } from './modules/geo-medallions/geo-medallions.module';
 import { TemperatureSensorModule } from './modules/temperature-sensor/temperature-sensor.module';
 import { PiHealthModule } from './modules/pi-health/pi-health.module';
 import { SmartLedgersModule } from './shared/modules/smart-ledgers.module';
@@ -165,9 +165,9 @@ export class SmartAppModule {
       module: SmartAppModule,
       imports: [
         // Import our new modules
-        DaoModule,
         DevicesModule,
         ConfigsModule,
+        GeoMedallionsModule,
         TemperatureSensorModule,
         PiHealthModule,
         

@@ -1,14 +1,13 @@
 import { Processor, Process } from '@nestjs/bull';
 import { Job } from 'bull';
 import { LoggerHelper } from '@hsuite/helpers';
-import { DevicesService } from './devices.service';
-import { SmartNodeSdkService } from '@hsuite/smartnode-sdk';
 import { ChainType, ILedger, SmartLedgersService } from '@hsuite/smart-ledgers';
 import deviceTopicValidator from '../../shared/validators/device.topics.validator.json';
-import { PrivateKey, Transaction, Client, Hbar, AccountCreateTransaction } from '@hashgraph/sdk';
+import { PrivateKey, Client, Hbar, AccountCreateTransaction } from '@hashgraph/sdk';
 import { SmartConfigService } from '@hsuite/smart-config';
 import { IHashgraph } from '@hsuite/hashgraph-types';
 import { OnModuleInit } from '@nestjs/common';
+import { ITopicCreationResult, SmartNodeCommonService } from '../smartnode-common.service';
 
 @Processor('device')
 export class DevicesConsumer implements OnModuleInit {
@@ -20,10 +19,9 @@ export class DevicesConsumer implements OnModuleInit {
   private ledger: ILedger;
 
   constructor(
-    private readonly devicesService: DevicesService,
-    private readonly smartNodeSdkService: SmartNodeSdkService,
     private readonly smartConfigService: SmartConfigService,
-    private readonly smartLedgersService: SmartLedgersService
+    private readonly smartLedgersService: SmartLedgersService,
+    private readonly smartNodeCommonService: SmartNodeCommonService
   ) {
     this.operator = this.smartConfigService.getOperator();
   }
@@ -56,30 +54,14 @@ export class DevicesConsumer implements OnModuleInit {
 
         console.log('hederaAccount', receipt);
 
-        // 3. Create a HCS Topic for the device using the smartnodes account validator
-        const topicValidatorConsensusTimestamp = await this.saveDeviceTopicValidator();
-        if (!topicValidatorConsensusTimestamp) throw new Error(`Validator registration failed for device ${deviceId}`);
+        const topicCreationResult: ITopicCreationResult = await this.smartNodeCommonService.createTopicWithValidator(deviceTopicValidator as any);
 
-        console.log('topicValidatorConsensusTimestamp', topicValidatorConsensusTimestamp);
-    
-        // 4. Create a HCS Topic for the device using the smartnodes topic validator
-        const hcsTopic = await this.smartNodeSdkService.sdk.hashgraph.hcs.createTopic({
-          validatorConsensusTimestamp: topicValidatorConsensusTimestamp,
-        });
-
-        const createTopicTx = Transaction.fromBytes( new Uint8Array(Buffer.from(hcsTopic)) );
-        const signedTopicTx = await createTopicTx.sign( PrivateKey.fromString(this.operator.privateKey) );
-        const topicTxResponse = await signedTopicTx.execute(this.client);
-        const topicReceipt = await topicTxResponse.getReceipt(this.client);
-
-        console.log('hcsTopic', topicReceipt);
-    
         // return all data to service save on database
         return {
           deviceId,
           ownerAddress,
           hederaAccount: receipt.accountId.toString(),
-          hcsTopic: topicReceipt.topicId.toString(),
+          hcsTopic: topicCreationResult.topicId,
           privateKey: ecdsaPrivateKey.toString(),
           publicKey: ecdsaPublicKey.toString(),
         };
@@ -87,17 +69,5 @@ export class DevicesConsumer implements OnModuleInit {
       this.logger.error(`Failed to process device creation for device ${job.data.deviceId}: ${error.message}`);
       throw error;
     }   
-  }
-
-  private async saveDeviceTopicValidator(): Promise<string | null> {
-    try {
-        const validatorConsensusTimestamp = await this.smartNodeSdkService.sdk.smartNode.validators
-        .addConsensusValidator(deviceTopicValidator as any);
-
-        return validatorConsensusTimestamp.toString();
-    } catch (error) {
-      this.logger.error(`Failed to save topic validator for device: ${error.message}`);
-      return null;
-    }
   }
 } 

@@ -29,33 +29,41 @@ export type ConfigDocument = Config & Document;
  * Hedera topic validator, which are immutable after initialization.
  */
 @Schema({
-  collection: 'smart_app_dao_configs',
+  collection: 'smart_app_medallions_configs',
   timestamps: true,
   validateBeforeSave: true
 })
 export class Config {
   /**
-   * @property dao_hcs
-   * @description The HCS (Hedera Consensus Service) topic ID for the DAO
+   * @property geo_medallions_config
+   * @description Configuration settings for geo medallions (NFT collection)
    * 
-   * This is a required string that stores the Hedera Consensus Service topic ID
-   * used for DAO operations. This is set once during initialization but is mutable
-   * in the database as it's a reference to the created Hedera topic.
+   * Contains the collection ID and metadata information for the geo medallions NFT collection.
+   * This includes the token collection ID and IPFS metadata CID.
    * 
-   * @example '0.0.123456'
+   * @example { collection_id: '0.0.123456', nft_metadata_cid: 'ipfs://...' }
    */
   @Prop({ 
     required: true, 
-    type: String
+    type: {
+      collection_id: { type: String, required: true },
+      nft_metadata_cid: { type: String, required: true }
+    }
   })
   @ApiProperty({
-    type: String,
-    description: 'HCS topic ID for the DAO',
-    example: '0.0.123456'
+    type: Object,
+    description: 'Configuration settings for geo medallions NFT collection',
+    example: {
+      collection_id: '0.0.123456',
+      nft_metadata_cid: 'ipfs://bafybeicfppolkroemgqbwwiko45cdfjl5wsinuzw5m34ysxgayrzgb35i4/medallion_cid.json'
+    }
   })
-  @IsString()
+  @IsObject()
   @IsNotEmpty()
-  dao_hcs: string;
+  geo_medallions_config: {
+    collection_id: string;
+    nft_metadata_cid: string;
+  };
 
   /**
    * @property apiRateLimit
@@ -123,6 +131,29 @@ export class Config {
     example: false
   })
   maintenanceMode: boolean;
+
+  /**
+   * @property customMetadata
+   * @description Additional custom metadata for the configuration
+   * 
+   * Allows storing arbitrary key-value pairs for custom configuration
+   * settings that may be needed for specific deployments or features.
+   * 
+   * @example {}
+   */
+  @Prop({ 
+    required: false, 
+    type: Object,
+    default: {}
+  })
+  @ApiProperty({
+    type: Object,
+    description: 'Additional custom metadata for the configuration',
+    example: {}
+  })
+  @IsOptional()
+  @IsObject()
+  customMetadata: Record<string, any>;
 
   /**
    * The timestamp when this configuration was created

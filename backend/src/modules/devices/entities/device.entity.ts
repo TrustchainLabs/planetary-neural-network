@@ -12,6 +12,9 @@ export class Device extends Document {
   @Prop({ required: true })
   ownerAddress: string;
 
+  @Prop({ required: true })
+  hexId: string;
+
   @Prop({ required: false })
   hederaAccount?: string;
 

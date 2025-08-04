@@ -8,6 +8,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Device, DeviceSchema } from './entities/device.entity';
 import { DeviceModelService } from './devices.model.service';
 import { SmartLedgersModule } from '../../shared/modules/smart-ledgers.module';
+import { DeviceControlGateway } from '../../sockets/device-control.gateway';
+import { SmartNodeCommonModule } from '../smartnode-common.module';
+import { GeoMedallionsModule } from '../geo-medallions/geo-medallions.module';
 
 
 @Module({
@@ -20,12 +23,15 @@ import { SmartLedgersModule } from '../../shared/modules/smart-ledgers.module';
       name: 'device',
     }),
     SmartLedgersModule,
+    SmartNodeCommonModule,
+    GeoMedallionsModule,
   ],
   controllers: [DevicesController],
   providers: [
     DevicesService,
     DeviceModelService,
     DevicesConsumer,
+    DeviceControlGateway,
   ],
   exports: [DevicesService]
 })

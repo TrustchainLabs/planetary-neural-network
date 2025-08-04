@@ -13,12 +13,10 @@
 import { Command, CommandRunner, Option } from 'nest-commander';
 import { Injectable, LoggerService, OnModuleInit } from '@nestjs/common';
 import { SmartNodeSdkService } from '@hsuite/smartnode-sdk';
-import * as daoTopicContent from './dao.topic.content.json';
-import { IValidators } from '@hsuite/validators-types';
 import { InjectModel } from '@nestjs/mongoose';
 import { Config, ConfigDocument } from '../entities/config.entity';
 import { Model } from 'mongoose';
-import { Client, PrivateKey, Transaction } from '@hashgraph/sdk';
+import { Client, PrivateKey, TokenCreateTransaction, TokenType, Transaction } from '@hashgraph/sdk';
 import { SmartConfigService } from '@hsuite/smart-config';
 import { IHashgraph } from '@hsuite/hashgraph-types';
 import { ChainType, ILedger, SmartLedgersService } from '@hsuite/smart-ledgers';
@@ -272,9 +270,12 @@ export class ConfigCommand extends CommandRunner implements OnModuleInit {
    * @param {string} topicId - The blockchain topic ID to associate with this configuration
    * @returns {Promise<ConfigDocument>} The newly created configuration document
    */
-  private async createConfig(topicId: string): Promise<ConfigDocument> {
+  private async createConfig(tokenId: string): Promise<ConfigDocument> {
     return this.configModel.create({
-      dao_hcs: topicId,
+      geo_medallions_config: {
+        collection_id: tokenId,
+        nft_metadata_cid: 'ipfs://bafybeigp4ojxfhnvph6mx3kojxnsf7lbzupkum2qqiq4n5t3pht362rdsm/medallion_cid.json',
+      },
       apiRateLimit: 100,
       adminAddresses: [],
       maintenanceMode: false,
@@ -339,13 +340,10 @@ export class ConfigCommand extends CommandRunner implements OnModuleInit {
       // Create a new config
       this.logger.log('Creating new configuration...');
 
-      let consensusValidator = await this.smartNodeSdkService.sdk.smartNode.validators
-        .addConsensusValidator(daoTopicContent as unknown as IValidators.IConsensus.IValidationParams);
-
-      let topicId = null;
+      let tokenId = null;
       switch(this.chain) {
         case ChainType.HASHGRAPH:
-          topicId = await this.hashgraphCreateTopic(consensusValidator.toString());
+          tokenId = await this.hederaCreateTokenCollection();
           break;
         case ChainType.RIPPLE:
           throw new Error('Ripple is not supported yet');
@@ -354,7 +352,7 @@ export class ConfigCommand extends CommandRunner implements OnModuleInit {
           throw new Error(`Unsupported chain type: ${this.chain}`);
       }
 
-      const config = await this.createConfig(topicId);
+      const config = await this.createConfig(tokenId);
 
       this.logger.log(`New configuration created successfully with ID: ${config._id}`);
     } catch (error) {
@@ -393,6 +391,31 @@ export class ConfigCommand extends CommandRunner implements OnModuleInit {
       return receipt.topicId.toString();
     } catch(error) {
       throw new Error(`Failed to create topic: ${error}`);
+    }
+  }
+
+  private async hederaCreateTokenCollection() {
+    try {
+      const transactionToExecute = new TokenCreateTransaction()
+        .setTokenName('GeoMedallions')
+        .setTokenSymbol('GEM')
+        .setTokenType(TokenType.NonFungibleUnique)
+        .setTreasuryAccountId(this.operator.accountId.toString())
+        .setAdminKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .setFreezeKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .setWipeKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .setSupplyKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .freezeWith(this.client);
+
+      let transaction = Transaction.fromBytes(new Uint8Array(Buffer.from(transactionToExecute.toBytes())));
+      const signTx = await transaction.sign(PrivateKey.fromStringED25519(this.operator.privateKey));
+
+      const submitTx = await signTx.execute(this.client);
+      const receipt = await submitTx.getReceipt(this.client);
+
+      return receipt.tokenId.toString();
+    } catch(error) {
+      throw new Error(`Failed to create token collection: ${error}`);
     }
   }
 }

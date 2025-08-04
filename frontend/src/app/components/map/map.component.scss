@@ -358,6 +358,152 @@
   }
 }
 
+// Loading overlay styles
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  color: white;
+
+  ion-spinner {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 16px;
+    opacity: 0.9;
+  }
+}
+
+// Device marker styles
+:global(.device-marker) {
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+// Device popup styles
+.device-popup {
+  min-width: 200px;
+
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+
+  .popup-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+
+    img {
+      flex-shrink: 0;
+    }
+
+    .device-info {
+      flex: 1;
+
+      .device-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text-color);
+      }
+
+      .device-id {
+        font-size: 12px;
+        color: var(--text-color-secondary);
+        margin-top: 2px;
+      }
+    }
+  }
+
+  .popup-content {
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+
+      .label {
+        font-weight: 500;
+        color: var(--text-color-secondary);
+        margin-right: 8px;
+      }
+
+      .value {
+        color: var(--text-color);
+        text-align: right;
+        flex: 1;
+
+        a {
+          text-decoration: none;
+          font-weight: 500;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+// Updated hexagon info panel for new data structure
+.hexagon-info-panel {
+  .devices-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-color-secondary);
+    margin-top: 4px;
+
+    ion-icon {
+      font-size: 14px;
+    }
+  }
+
+  .owner-info {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+
+    small {
+      font-size: 11px;
+      color: var(--text-color-secondary);
+      word-break: break-all;
+    }
+  }
+
+  .status {
+    &.unavailable {
+      background: var(--ion-color-medium);
+      color: var(--ion-color-medium-contrast);
+    }
+  }
+}
+
 // Dark mode specific adjustments
 @media (prefers-color-scheme: dark) {
   .map-controls-right ion-button {

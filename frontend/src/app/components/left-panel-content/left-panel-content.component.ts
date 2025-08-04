@@ -41,9 +41,34 @@ import * as dayjs from 'dayjs';
               <p>{{ selectedNode.properties['name'] || selectedNode.properties['uuid'] }}</p>
             </div>
 
+            <!-- Device Information -->
+            <div class="device-info" *ngIf="selectedNode.properties['deviceId']">
+              <div class="info-item">
+                <ion-icon name="hardware-chip-outline"></ion-icon>
+                <span>Device ID: {{ selectedNode.properties['deviceId'] }}</span>
+              </div>
+              <div class="info-item" *ngIf="selectedNode.properties['hexId']">
+                <ion-icon name="hexagon-outline"></ion-icon>
+                <span>Hexagon: {{ selectedNode.properties['hexId'] }}</span>
+              </div>
+              <div class="info-item" *ngIf="selectedNode.properties['ownerAddress']">
+                <ion-icon name="person-outline"></ion-icon>
+                <span>Owner: {{ selectedNode.properties['ownerAddress'] }}</span>
+              </div>
+              <div class="info-item" *ngIf="selectedNode.properties['hederaAccount']">
+                <ion-icon name="wallet-outline"></ion-icon>
+                <span>Account: {{ selectedNode.properties['hederaAccount'] }}</span>
+              </div>
+            </div>
+
             <div class="latest-measurement" *ngIf="getLatestMeasurementValue()">
               <div class="measurement-value">{{ getLatestMeasurementValue() }}</div>
               <div class="measurement-time">{{ getLastUpdateTime() }}</div>
+            </div>
+
+            <div class="no-measurement" *ngIf="!getLatestMeasurementValue() && !isLoading">
+              <ion-icon name="thermometer-outline"></ion-icon>
+              <span>No recent measurements available</span>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:3000/api';
+export const API_BASE_URL = 'http://localhost:8888';
 export const SMART_APP_API_URL = API_BASE_URL;
 
 export const APP_CONSTANTS = {
@@ -16,5 +16,5 @@ export const MAPBOX_CONFIG = {
   ACCESS_TOKEN: MAPBOX_ACCESS_TOKEN,
   STYLE: 'mapbox://styles/mapbox/dark-v10',
   CENTER: [101.31551054444253, 3.041923959239469] as [number, number],
-  ZOOM: 10
+  ZOOM: 0
 };
