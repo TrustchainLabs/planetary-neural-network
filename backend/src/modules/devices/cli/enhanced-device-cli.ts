@@ -291,7 +291,7 @@ export class EnhancedDeviceCommand extends CommandRunner implements OnModuleInit
     try {
       // Get health data from API
       const [tempHealth, piHealth, deviceHealth] = await Promise.all([
-        this.makeApiCall('/temperature-sensor/health'),
+        this.makeApiCall('/sensors/health'),
         this.makeApiCall('/pi-health/health'),
         this.makeApiCall('/pi-health/readings/latest')
       ]);
@@ -459,7 +459,7 @@ export class EnhancedDeviceCommand extends CommandRunner implements OnModuleInit
   private async showLatestData(): Promise<void> {
     try {
       const [tempData, piData] = await Promise.all([
-        this.makeApiCall('/temperature-sensor/readings/latest'),
+        this.makeApiCall('/sensors/readings/latest'),
         this.makeApiCall('/pi-health/readings/latest')
       ]);
 
@@ -497,7 +497,7 @@ export class EnhancedDeviceCommand extends CommandRunner implements OnModuleInit
   private async showDataStats(): Promise<void> {
     try {
       const [tempStats, piStats] = await Promise.all([
-        this.makeApiCall('/temperature-sensor/stats'),
+        this.makeApiCall('/sensors/stats'),
         this.makeApiCall('/pi-health/stats')
       ]);
 
@@ -545,9 +545,9 @@ export class EnhancedDeviceCommand extends CommandRunner implements OnModuleInit
 
       // Trigger sensor services to start collecting data
       const sensorEndpoints = [
-        '/temperature-sensor/start',
+        '/sensors/start',
         '/pi-health/start',
-        '/temperature-sensor/dht11/status'
+        '/sensors/dht11/status'
       ];
 
       for (const endpoint of sensorEndpoints) {
@@ -587,7 +587,7 @@ export class EnhancedDeviceCommand extends CommandRunner implements OnModuleInit
 
       // Get current sensor readings
       const [tempReading, piReading] = await Promise.all([
-        this.makeApiCall('/temperature-sensor/readings/latest'),
+        this.makeApiCall('/sensors/readings/latest'),
         this.makeApiCall('/pi-health/readings/latest')
       ]);
 

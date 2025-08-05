@@ -26,6 +26,7 @@ export interface Device {
   hcsTopic?: string;
   privateKey?: string;
   publicKey?: string;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }

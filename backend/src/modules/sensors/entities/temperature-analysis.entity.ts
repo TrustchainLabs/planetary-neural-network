@@ -16,13 +16,13 @@ export class TemperatureAnalysis extends Document {
   @Prop({ 
     required: true,
     type: {
-      start: { type: Date, required: true },
-      end: { type: Date, required: true }
+      start: { type: String, required: true },
+      end: { type: String, required: true }
     }
   })
   timeRange: {
-    start: Date;
-    end: Date;
+    start: string;
+    end: string;
   };
 
   @Prop({ required: true })
@@ -42,13 +42,13 @@ export class TemperatureAnalysis extends Document {
     default: [],
     type: [{
       value: { type: Number, required: true },
-      timestamp: { type: Date, required: true },
+      timestamp: { type: String, required: true },
       deviation: { type: Number, required: true }
     }]
   })
   outliers: Array<{
     value: number;
-    timestamp: Date;
+    timestamp: string;
     deviation: number; // How many standard deviations from mean
   }>;
 
@@ -94,8 +94,8 @@ export class TemperatureAnalysis extends Document {
   @Prop({ required: false })
   chainTxHash?: string; // Hash of transaction sent to chain
 
-  @Prop({ required: true, default: Date.now })
-  analysisTimestamp: Date;
+  @Prop({ required: true, default: new Date().toISOString() })
+  analysisTimestamp: string;
 
   @Prop({ 
     required: false,

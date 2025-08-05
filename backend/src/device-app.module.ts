@@ -37,7 +37,7 @@ import { BullModule } from '@nestjs/bull';
 // Import device-specific modules only
 import { DevicesModule } from './modules/devices/devices.module';
 import { ConfigsModule } from './modules/config/config.module';
-import { TemperatureSensorModule } from './modules/temperature-sensor/temperature-sensor.module';
+import { SensorsModule } from './modules/sensors/sensors.module';
 import { PiHealthModule } from './modules/pi-health/pi-health.module';
 import { SmartLedgersModule } from './shared/modules/smart-ledgers.module';
 
@@ -144,7 +144,7 @@ export class DeviceAppModule {
         // Import device-specific modules only
         DevicesModule,
         ConfigsModule,
-        TemperatureSensorModule,
+        SensorsModule,
         PiHealthModule,
         
         // Configure Bull module for background jobs

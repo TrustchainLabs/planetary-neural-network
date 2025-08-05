@@ -4,7 +4,8 @@ export enum TabName {
   WIND_SPEED = 'windSpeed',
   WIND_DIRECTION = 'windDirection',
   AIR_QUALITY = 'airQuality',
-  ADD_DEVICE = 'addDevice'
+  ADD_DEVICE = 'addDevice',
+  DEVICE_MANAGEMENT = 'deviceManagement'
 }
 
 export enum UserType {

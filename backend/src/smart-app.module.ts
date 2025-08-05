@@ -56,7 +56,7 @@ import { BullModule } from '@nestjs/bull';
 import { DevicesModule } from './modules/devices/devices.module';
 import { ConfigsModule } from './modules/config/config.module';
 import { GeoMedallionsModule } from './modules/geo-medallions/geo-medallions.module';
-import { TemperatureSensorModule } from './modules/temperature-sensor/temperature-sensor.module';
+import { SensorsModule } from './modules/sensors/sensors.module';
 import { PiHealthModule } from './modules/pi-health/pi-health.module';
 import { SmartLedgersModule } from './shared/modules/smart-ledgers.module';
 
@@ -168,7 +168,7 @@ export class SmartAppModule {
         DevicesModule,
         ConfigsModule,
         GeoMedallionsModule,
-        TemperatureSensorModule,
+        SensorsModule,
         PiHealthModule,
         
         // Configure Bull module for queues

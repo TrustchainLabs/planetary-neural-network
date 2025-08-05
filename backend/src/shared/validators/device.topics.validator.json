@@ -32,8 +32,8 @@
         "batchId": "string",
         "readingCount": "number",
         "timeRange": {
-          "start": "Date",
-          "end": "Date"
+          "start": "string",
+          "end": "string"
         },
         "averageTemperature": "number",
         "unit": "string",

@@ -44,6 +44,16 @@ import { TabName } from '../../../shared/enums';
           [active]="selectedTab === TabName.ADD_DEVICE"
           (tabClick)="onTabSelect($event)"
         ></app-tab>
+
+        <app-tab
+          className="device-management"
+          [name]="TabName.DEVICE_MANAGEMENT"
+          tooltip="Device Management"
+          src="assets/icons/gauge.svg"
+          alt="Gauge"
+          [active]="selectedTab === TabName.DEVICE_MANAGEMENT"
+          (tabClick)="onTabSelect($event)"
+        ></app-tab>
       </div>
 
       <app-user-tab class="user-tab"></app-user-tab>

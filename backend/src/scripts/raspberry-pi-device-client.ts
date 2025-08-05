@@ -38,7 +38,7 @@ class RaspberryPiDeviceOperations implements IDeviceOperations {
       this.logger.debug('Starting DHT11 sensor data collection...');
       
       // Check if Python script exists
-      const scriptPath = path.join(__dirname, '../modules/temperature-sensor/scripts/pi4_dht11_sensor.py');
+      const scriptPath = path.join(__dirname, '../modules/sensors/scripts/pi4_dht11_sensor.py');
       if (!fs.existsSync(scriptPath)) {
         this.logger.error(`Python sensor script not found: ${scriptPath}`);
         return false;

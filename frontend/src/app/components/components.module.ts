@@ -7,6 +7,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { WalletConnectionComponent } from './wallet-connection/wallet-connection.component';
 import { WalletsSessionsComponent } from './sessions-modal/sessions-modal.component';
 import { WalletsModalComponent } from './wallets-modal/wallets-modal.component';
+import { DeviceManagementComponent } from './device-management/device-management.component';
 
 @NgModule({
   imports: [
@@ -18,6 +19,7 @@ import { WalletsModalComponent } from './wallets-modal/wallets-modal.component';
     WalletConnectionComponent,
     WalletsSessionsComponent,
     WalletsModalComponent,
+    DeviceManagementComponent,
   ],
   declarations: [],
   exports: [
@@ -25,6 +27,7 @@ import { WalletsModalComponent } from './wallets-modal/wallets-modal.component';
     WalletConnectionComponent,
     WalletsSessionsComponent,
     WalletsModalComponent,
+    DeviceManagementComponent,
   ],
 })
 export class ComponentsModule {}

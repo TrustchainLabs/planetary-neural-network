@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { LineChartComponent } from '../common/line-chart/line-chart.component';
 import { AddDeviceComponent } from '../add-device/add-device.component';
+import { DeviceManagementComponent } from '../device-management/device-management.component';
 import { Feature } from '../../shared/types';
 import { TabName } from '../../shared/enums';
 import { MeasurementsService } from '../../shared/services/measurements.service';
@@ -17,7 +18,8 @@ import * as dayjs from 'dayjs';
     CommonModule,
     IonicModule,
     LineChartComponent,
-    AddDeviceComponent
+    AddDeviceComponent,
+    DeviceManagementComponent
   ],
   template: `
     <div class="content">
@@ -25,7 +27,11 @@ import * as dayjs from 'dayjs';
         <app-add-device></app-add-device>
       </div>
 
-      <div *ngIf="selectedTab !== TabName.ADD_DEVICE">
+      <div *ngIf="selectedTab === TabName.DEVICE_MANAGEMENT">
+        <app-device-management></app-device-management>
+      </div>
+
+      <div *ngIf="selectedTab !== TabName.ADD_DEVICE && selectedTab !== TabName.DEVICE_MANAGEMENT">
         <div *ngIf="!selectedNode" class="no-selection">
           <div class="placeholder">
             <ion-icon name="analytics-outline" size="large"></ion-icon>
@@ -123,6 +129,8 @@ export class LeftPanelContentComponent implements OnInit, OnChanges {
         return 'Temperature';
       case TabName.ADD_DEVICE:
         return 'Add Device';
+      case TabName.DEVICE_MANAGEMENT:
+        return 'Device Management';
       default:
         return 'Climate Data';
     }
@@ -156,7 +164,7 @@ export class LeftPanelContentComponent implements OnInit, OnChanges {
   }
 
   async loadChartData() {
-    if (!this.selectedNode || this.selectedTab === TabName.ADD_DEVICE) {
+    if (!this.selectedNode || this.selectedTab === TabName.ADD_DEVICE || this.selectedTab === TabName.DEVICE_MANAGEMENT) {
       this.chartData = [];
       return;
     }

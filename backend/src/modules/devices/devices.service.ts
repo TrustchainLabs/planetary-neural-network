@@ -70,7 +70,8 @@ export class DevicesService  {
     const job = await this.deviceQueue.add('process-device-creation', {
       deviceId: device.deviceId,
       ownerAddress: device.ownerAddress,
-      smartDevicesConfig: config.smart_devices_config
+      smartDevicesConfig: config.smart_devices_config,
+      rewardTokenId: config.reward_token_config.token_id
     });
 
     job.finished().then(async (result) => {

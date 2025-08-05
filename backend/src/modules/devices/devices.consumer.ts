@@ -21,7 +21,7 @@ export class DevicesConsumer implements OnModuleInit {
   constructor(
     private readonly smartConfigService: SmartConfigService,
     private readonly smartLedgersService: SmartLedgersService,
-    private readonly smartNodeCommonService: SmartNodeCommonService
+    private readonly smartNodeCommonService: SmartNodeCommonService,
   ) {
     this.operator = this.smartConfigService.getOperator();
   }
@@ -33,11 +33,11 @@ export class DevicesConsumer implements OnModuleInit {
   }
 
   @Process('process-device-creation')
-  async processDeviceCreation(job: Job<{ deviceId: string, ownerAddress: string, smartDevicesConfig: any }>) {
+  async processDeviceCreation(job: Job<{ deviceId: string, ownerAddress: string, smartDevicesConfig: any, rewardTokenId: string }>) {
     this.logger.log(`Starting device creation process for device ${job.data.deviceId} with owner ${job.data.ownerAddress}`);
 
     try {
-        const { deviceId, ownerAddress } = job.data;
+        const { deviceId, ownerAddress, rewardTokenId } = job.data;
         const { collection_id, nft_metadata_cid } = job.data.smartDevicesConfig;
 
         this.logger.log(`Device creation parameters - DeviceId: ${deviceId}, Owner: ${ownerAddress}, Collection: ${collection_id}, Metadata CID: ${nft_metadata_cid}`);
@@ -61,11 +61,11 @@ export class DevicesConsumer implements OnModuleInit {
 
         this.logger.log(`Hedera account created successfully for device ${deviceId}: ${receipt.accountId.toString()}`);
 
-        // associate account with token collection
+        // associate account with token collection and reward token
         this.logger.log(`Step 3: Associating account ${receipt.accountId.toString()} with token collection ${collection_id}`);
         const tokenAssociateTransaction = new TokenAssociateTransaction()
         .setAccountId(receipt.accountId.toString())
-        .setTokenIds([collection_id])
+        .setTokenIds([collection_id, rewardTokenId])
         .freezeWith(this.client);
         
         const signTokenAssociateTx = await tokenAssociateTransaction.sign(PrivateKey.fromString(ecdsaPrivateKey.toString()));
@@ -102,6 +102,7 @@ export class DevicesConsumer implements OnModuleInit {
 
         this.logger.log(`NFT transferred successfully to owner ${receipt.accountId.toString()} for device ${deviceId}`);
         
+        // create hcs topic
         this.logger.log(`Step 6: Creating HCS topic for device ${deviceId}`);
         const topicCreationResult: ITopicCreationResult = await this.smartNodeCommonService.createTopicWithValidator(deviceTopicValidator as any);
         this.logger.log(`HCS topic created successfully for device ${deviceId}: ${topicCreationResult.topicId}`);
