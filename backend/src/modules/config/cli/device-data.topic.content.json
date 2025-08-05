@@ -1,0 +1,77 @@
+{
+    "smartNodeSecurity": "full",
+    "actionsConditions": {
+      "values": [
+        "update",
+        "message"
+      ],
+      "controller": "owner"
+    },
+    "updateConditions": {
+      "values": [
+        "memo"
+      ],
+      "controller": "owner"
+    },
+    "tokenGates": {
+      "fungibles": {
+        "tokens": []
+      },
+      "nonFungibles": {
+        "tokens": []
+      },
+      "timeRange": {
+        "from": 0,
+        "to": 0
+      }
+    },
+    "customInterface": {
+      "interfaceName": "Device data",
+      "properties": {
+          "deviceId": "string",
+          "batchId": "string",
+          "readingCount": "number",
+          "timeRange": {
+            "start": "Date",
+            "end": "Date"
+          },
+          "averageTemperature": "number",
+          "unit": "string",
+          "minimumTemperature": "number",
+          "maximumTemperature": "number",
+          "outliers": [
+            {
+              "value": "number",
+              "timestamp": "string",
+              "deviation": "number"
+            }
+          ],
+          "predictions": [
+            {
+              "predictedValue": "number",
+              "confidence": "number",
+              "anomalyScore": "number",
+              "isAnomaly": "boolean",
+              "trend": "string"
+            }
+          ],
+          "severity": "string",
+          "warnings": ["string"],
+          "aiInsights": "string",
+          "location": {
+            "latitude": "number",
+            "longitude": "number"
+          },
+          "chainTxHash": "string",
+          "analysisTimestamp": "string",
+          "statisticalData": {
+            "standardDeviation": "number",
+            "variance": "number",
+            "trendSlope": "number",
+            "stabilityScore": "number",
+            "mlConfidenceScore": "number",
+            "modelTrained": "boolean"
+          }
+      }
+    }
+  }

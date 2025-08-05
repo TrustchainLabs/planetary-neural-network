@@ -65,6 +65,71 @@ export class Config {
     nft_metadata_cid: string;
   };
 
+    /**
+   * @property smart_devices_config
+   * @description Configuration settings for smart devices (NFT collection)
+   * 
+   * Contains the collection ID and metadata information for the smart devices NFT collection.
+   * This includes the token collection ID and IPFS metadata CID.
+   * 
+   * @example { collection_id: '0.0.123456', nft_metadata_cid: 'ipfs://...' }
+   */
+    @Prop({ 
+      required: true, 
+      type: {
+        collection_id: { type: String, required: true },
+        nft_metadata_cid: { type: String, required: true }
+      }
+    })
+    @ApiProperty({
+      type: Object,
+      description: 'Configuration settings for smart devices NFT collection',
+      example: {
+        collection_id: '0.0.123456',
+        nft_metadata_cid: 'ipfs://bafybeiejjsj4fiq7fhbzwoa4qpuk6l7rhpa3gvih43vp7pqeykbsblgh2e/smartdevice_cid.json'
+      }
+    })
+    @IsObject()
+    @IsNotEmpty()
+    smart_devices_config: {
+      collection_id: string;
+      nft_metadata_cid: string;
+    };
+
+  /**
+   * @property reward_token_config
+   * @description Configuration settings for device reward tokens
+   * 
+   * Contains the token ID and reward settings for the fungible reward token
+   * that devices earn when submitting climate data on-chain.
+   * 
+   * @example { token_id: '0.0.789456', reward_per_submission: '10', max_daily_rewards: '1000' }
+   */
+  @Prop({ 
+    required: true, 
+    type: {
+      token_id: { type: String, required: true },
+      reward_per_submission: { type: String, required: true },
+      max_daily_rewards: { type: String, required: true }
+    }
+  })
+  @ApiProperty({
+    type: Object,
+    description: 'Configuration settings for device reward tokens',
+    example: {
+      token_id: '0.0.789456',
+      reward_per_submission: '10',
+      max_daily_rewards: '1000'
+    }
+  })
+  @IsObject()
+  @IsNotEmpty()
+  reward_token_config: {
+    token_id: string;
+    reward_per_submission: string;
+    max_daily_rewards: string;
+  };
+
   /**
    * @property apiRateLimit
    * @description Rate limit for API calls (requests per minute)

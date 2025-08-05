@@ -11,6 +11,7 @@ import { SmartLedgersModule } from '../../shared/modules/smart-ledgers.module';
 import { DeviceControlGateway } from '../../sockets/device-control.gateway';
 import { SmartNodeCommonModule } from '../smartnode-common.module';
 import { GeoMedallionsModule } from '../geo-medallions/geo-medallions.module';
+import { ConfigsModule } from '../config/config.module';
 
 
 @Module({
@@ -25,6 +26,7 @@ import { GeoMedallionsModule } from '../geo-medallions/geo-medallions.module';
     SmartLedgersModule,
     SmartNodeCommonModule,
     GeoMedallionsModule,
+    ConfigsModule,
   ],
   controllers: [DevicesController],
   providers: [

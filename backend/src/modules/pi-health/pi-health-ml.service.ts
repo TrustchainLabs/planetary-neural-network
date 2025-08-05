@@ -59,7 +59,7 @@ export class PiHealthMLService {
       const riskScore = this.calculateRiskScore(healthData);
 
       // Detect anomalies
-      const anomalyDetected = this.detectAnomalies(healthData);
+      const anomalyDetected = this.detectAnomaliesInternal(healthData);
 
       // Determine alert level based on risk score and anomalies
       const alertLevel = this.determineAlertLevel(riskScore, anomalyDetected, alertLevelIndex);
@@ -159,9 +159,9 @@ export class PiHealthMLService {
   }
 
   /**
-   * Detect anomalies in health data
+   * Detect anomalies in health data (private helper)
    */
-  private detectAnomalies(healthData: any): boolean {
+  private detectAnomaliesInternal(healthData: any): boolean {
     const anomalies = [];
 
     // Temperature anomaly
@@ -363,5 +363,113 @@ export class PiHealthMLService {
     this.isTrained = false;
     this.initializeModel();
     this.logger.log('Pi Health ML model reset');
+  }
+
+  /**
+   * Detect anomalies in health data (public method for consumers)
+   */
+  async detectAnomalies(
+    deviceId: string,
+    cpuUsage: number,
+    memoryUsage: number,
+    diskUsage: number,
+    temperature: number
+  ): Promise<any> {
+    try {
+      const healthData = {
+        cpuUsage,
+        memoryUsage,
+        diskUsage,
+        cpuTemperature: temperature
+      };
+
+      const analysis = await this.analyzeHealthData(healthData);
+      
+      return {
+        isAnomaly: analysis.anomalyDetected,
+        severity: analysis.alertLevel,
+        riskScore: analysis.riskScore,
+        confidence: analysis.confidence,
+        factors: analysis.factors
+      };
+    } catch (error) {
+      this.logger.error(`Failed to detect anomalies for device ${deviceId}:`, error);
+      return {
+        isAnomaly: false,
+        severity: 'normal',
+        riskScore: 0,
+        confidence: 0,
+        factors: []
+      };
+    }
+  }
+
+  /**
+   * Predict failure based on historical data
+   */
+  async predictFailure(deviceId: string, historicalData: any[]): Promise<any> {
+    try {
+      if (historicalData.length === 0) {
+        return { riskLevel: 'low', confidence: 0 };
+      }
+
+      // Analyze recent health data for failure indicators
+      const recentData = historicalData.slice(-10); // Last 10 readings
+      let totalRiskScore = 0;
+      
+      for (const reading of recentData) {
+        const analysis = await this.analyzeHealthData(reading);
+        totalRiskScore += analysis.riskScore;
+      }
+      
+      const avgRiskScore = totalRiskScore / recentData.length;
+
+      // Determine risk level based on average risk score
+      let riskLevel = 'low';
+      if (avgRiskScore > 0.8) riskLevel = 'high';
+      else if (avgRiskScore > 0.6) riskLevel = 'medium';
+
+      return {
+        riskLevel,
+        confidence: Math.min(0.9, avgRiskScore + 0.3),
+        avgRiskScore,
+        dataPoints: historicalData.length
+      };
+    } catch (error) {
+      this.logger.error(`Failed to predict failure for device ${deviceId}:`, error);
+      return {
+        riskLevel: 'low',
+        confidence: 0,
+        avgRiskScore: 0,
+        dataPoints: 0
+      };
+    }
+  }
+
+  /**
+   * Calculate health score
+   */
+  async calculateHealthScore(deviceId: string, healthData: any): Promise<any> {
+    try {
+      const analysis = await this.analyzeHealthData(healthData);
+      
+      // Convert risk score to health score (0-100, higher is better)
+      const healthScore = Math.max(0, 100 - (analysis.riskScore * 100));
+      
+      return {
+        score: Math.round(healthScore),
+        riskLevel: analysis.alertLevel,
+        factors: analysis.factors,
+        confidence: analysis.confidence
+      };
+    } catch (error) {
+      this.logger.error(`Failed to calculate health score for device ${deviceId}:`, error);
+      return {
+        score: 50,
+        riskLevel: 'normal',
+        factors: [],
+        confidence: 0
+      };
+    }
   }
 } 

@@ -8,8 +8,11 @@
 
 import { Module } from '@nestjs/common';
 import { ConfigCommand } from './cli/config-cli';
+import { DeviceActivationCommand } from '../devices/cli/device-activation-cli';
+import { EnhancedDeviceCommand } from '../devices/cli/enhanced-device-cli';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Config, ConfigSchema } from './entities/config.entity';
+import { Device, DeviceSchema } from '../devices/entities/device.entity';
 import { SmartLedgersModule } from '../../shared/modules/smart-ledgers.module';
 
 /**
@@ -27,13 +30,19 @@ import { SmartLedgersModule } from '../../shared/modules/smart-ledgers.module';
   // Import ClientModule to make ClientService available for injection
   // No need to call forRootAsync here since it's configured at the app level
   imports: [
-    MongooseModule.forFeature([{
-      name: Config.name, 
-      schema: ConfigSchema 
-    }]),
+        MongooseModule.forFeature([
+      { 
+        name: Config.name, 
+        schema: ConfigSchema 
+      },
+      {
+        name: Device.name,
+        schema: DeviceSchema
+      }
+    ]),
     SmartLedgersModule,
   ],
-  providers: [ConfigCommand],
-  exports: [ConfigCommand],
+  providers: [ConfigCommand, DeviceActivationCommand, EnhancedDeviceCommand],
+  exports: [ConfigCommand, MongooseModule],
 })
 export class ConfigsModule {} 

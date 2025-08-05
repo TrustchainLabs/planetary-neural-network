@@ -5,6 +5,7 @@ import { PiHealthController } from './pi-health.controller';
 import { PiHealthService } from './pi-health.service';
 import { PiHealthMLService } from './pi-health-ml.service';
 import { PiHealth, PiHealthSchema } from './entities/pi-health.entity';
+import { PiHealthAnalysisConsumer } from './consumers/pi-health-analysis.consumer';
 
 @Module({
   imports: [
@@ -18,13 +19,14 @@ import { PiHealth, PiHealthSchema } from './entities/pi-health.entity';
     
     // Bull queue for async processing
     BullModule.registerQueue({
-      name: 'pi-health-processing',
+      name: 'pi-health-analysis',
     }),
   ],
   controllers: [PiHealthController],
   providers: [
     PiHealthService,
     PiHealthMLService,
+    PiHealthAnalysisConsumer,
   ],
   exports: [
     PiHealthService,

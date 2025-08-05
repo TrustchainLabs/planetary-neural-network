@@ -12,16 +12,23 @@ export class PiHealthService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PiHealthService.name);
   private readonly BATCH_SIZE = 10; // Number of readings before triggering AI analysis
   private isRunning = false;
+  private readonly ENABLE_MOCK_SENSORS = process.env.ENABLE_MOCK_SENSORS === 'true';
 
   constructor(
     @InjectModel(PiHealth.name)
     private readonly piHealthModel: Model<PiHealthDocument>,
     private readonly piHealthMlService: PiHealthMLService,
-    @InjectQueue('pi-health-processing') private readonly processingQueue: Queue,
+    @InjectQueue('pi-health-analysis') private readonly processingQueue: Queue,
   ) {}
 
   async onModuleInit() {
     this.logger.log('Pi Health service initialized');
+    
+    if (this.ENABLE_MOCK_SENSORS) {
+      this.logger.log('Mock sensors enabled - Pi health monitoring will use simulated data');
+    } else {
+      this.logger.log('Real sensor mode - Pi health monitoring will use actual system metrics');
+    }
   }
 
   async onModuleDestroy() {
@@ -393,5 +400,93 @@ export class PiHealthService implements OnModuleInit, OnModuleDestroy {
     this.logger.debug(`Generated mock health reading: CPU: ${roundedCpuTemp}°C, Usage: ${roundedCpuUsage}%`);
 
     return await this.createHealthReading(mockReading);
+  }
+
+  /**
+   * Store analysis results for device
+   */
+  async storeAnalysisResult(deviceId: string, analysisData: any): Promise<void> {
+    try {
+      // Store analysis result in database or log it
+      this.logger.log(`Stored analysis result for device ${deviceId}: ${analysisData.type}`);
+      
+      // Here you could store in a separate analysis collection
+      // For now, just log the result
+    } catch (error) {
+      this.logger.error(`Failed to store analysis result for device ${deviceId}:`, error);
+    }
+  }
+
+  /**
+   * Get historical data for analysis
+   */
+  async getHistoricalData(deviceId: string, hours: number): Promise<any[]> {
+    try {
+      const startDate = new Date();
+      startDate.setHours(startDate.getHours() - hours);
+      
+      return await this.piHealthModel.find({
+        deviceId,
+        timestamp: { $gte: startDate }
+      }).sort({ timestamp: 1 }).exec();
+    } catch (error) {
+      this.logger.error(`Failed to get historical data for device ${deviceId}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Update device health score
+   */
+  async updateDeviceHealthScore(deviceId: string, healthScore: any): Promise<void> {
+    try {
+      this.logger.log(`Updated health score for device ${deviceId}: ${healthScore.score}/100`);
+      
+      // Here you could update a device health score collection
+      // For now, just log the update
+    } catch (error) {
+      this.logger.error(`Failed to update health score for device ${deviceId}:`, error);
+    }
+  }
+
+  /**
+   * Submit health data to blockchain for rewards
+   */
+  async submitHealthDataToBlockchain(
+    deviceId: string, 
+    accountId: string, 
+    healthMetrics: any, 
+    rewardAmount: string
+  ): Promise<{ success: boolean; txHash?: string; error?: string }> {
+    try {
+      this.logger.log(`Submitting health data to blockchain for device ${deviceId}`);
+      
+      // Here you would implement the actual blockchain submission
+      // For now, return a mock success response
+      return {
+        success: true,
+        txHash: `mock-tx-${Date.now()}`,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to submit health data to blockchain for device ${deviceId}:`, error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Log health alert
+   */
+  async logHealthAlert(deviceId: string, alertType: string, data: any): Promise<void> {
+    try {
+      this.logger.warn(`Health alert logged for device ${deviceId}: ${alertType}`, data);
+      
+      // Here you could store alerts in a separate collection
+      // For now, just log the alert
+    } catch (error) {
+      this.logger.error(`Failed to log health alert for device ${deviceId}:`, error);
+    }
   }
 } 

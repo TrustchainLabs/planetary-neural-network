@@ -598,4 +598,167 @@ export class TemperatureMachineLearningService implements OnModuleInit {
     this.isModelTrained = false;
     this.logger.log('ML service cleaned up');
   }
+
+  /**
+   * Analyze temperature trends
+   */
+  async analyzeTrends(deviceId: string, historicalData: any[]): Promise<any> {
+    try {
+      if (historicalData.length === 0) {
+        return { trends: [], overallTrend: 'stable' };
+      }
+
+      const temperatures = historicalData.map(reading => reading.value);
+      const trend = this.analyzeTrend(historicalData);
+      
+      return {
+        trends: [
+          {
+            type: 'temperature_trend',
+            direction: trend,
+            confidence: this.calculateConfidenceScore(historicalData),
+            dataPoints: temperatures.length
+          }
+        ],
+        overallTrend: trend
+      };
+    } catch (error) {
+      this.logger.error(`Failed to analyze trends for device ${deviceId}:`, error);
+      return { trends: [], overallTrend: 'stable' };
+    }
+  }
+
+  /**
+   * Detect anomalies in temperature data
+   */
+  async detectAnomalies(deviceId: string, temperature: number, humidity: number): Promise<any> {
+    try {
+      const anomalyScore = this.calculateAnomalyScore(temperature);
+      const isAnomaly = anomalyScore > this.ANOMALY_THRESHOLD;
+      
+      return {
+        isAnomaly,
+        severity: isAnomaly ? (anomalyScore > this.ANOMALY_THRESHOLD * 2 ? 'high' : 'medium') : 'low',
+        anomalyScore,
+        temperature,
+        humidity,
+        threshold: this.ANOMALY_THRESHOLD
+      };
+    } catch (error) {
+      this.logger.error(`Failed to detect anomalies for device ${deviceId}:`, error);
+      return {
+        isAnomaly: false,
+        severity: 'low',
+        anomalyScore: 0,
+        temperature,
+        humidity,
+        threshold: this.ANOMALY_THRESHOLD
+      };
+    }
+  }
+
+  /**
+   * Recognize patterns in temperature data
+   */
+  async recognizePatterns(deviceId: string, historicalData: any[]): Promise<any> {
+    try {
+      if (historicalData.length === 0) {
+        return { patterns: [] };
+      }
+
+      const seasonalPattern = this.detectSeasonalPattern(historicalData);
+      const trend = this.analyzeTrend(historicalData);
+      
+      return {
+        patterns: [
+          {
+            type: 'seasonal',
+            data: seasonalPattern,
+            confidence: this.calculateConfidenceScore(historicalData)
+          },
+          {
+            type: 'trend',
+            direction: trend,
+            confidence: this.calculateConfidenceScore(historicalData)
+          }
+        ]
+      };
+    } catch (error) {
+      this.logger.error(`Failed to recognize patterns for device ${deviceId}:`, error);
+      return { patterns: [] };
+    }
+  }
+
+  /**
+   * Analyze environmental impact
+   */
+  async analyzeEnvironmentalImpact(deviceId: string, temperatureData: any, location?: any): Promise<any> {
+    try {
+      const impact = {
+        temperature: temperatureData.temperature,
+        humidity: temperatureData.humidity,
+        heatIndex: temperatureData.heatIndex,
+        environmentalScore: this.calculateEnvironmentalScore(temperatureData),
+        location: location || { lat: 0, lon: 0 }
+      };
+      
+      return impact;
+    } catch (error) {
+      this.logger.error(`Failed to analyze environmental impact for device ${deviceId}:`, error);
+      return {
+        temperature: temperatureData.temperature,
+        humidity: temperatureData.humidity,
+        environmentalScore: 0,
+        location: location || { lat: 0, lon: 0 }
+      };
+    }
+  }
+
+  /**
+   * Calculate data quality score
+   */
+  async calculateDataQuality(temperatureReadings: any[]): Promise<number> {
+    try {
+      if (temperatureReadings.length === 0) {
+        return 0;
+      }
+
+      // Calculate quality based on consistency, completeness, and range
+      const temperatures = temperatureReadings.map(r => r.value);
+      const avgTemp = temperatures.reduce((sum, t) => sum + t, 0) / temperatures.length;
+      const variance = temperatures.reduce((sum, t) => sum + Math.pow(t - avgTemp, 2), 0) / temperatures.length;
+      const stdDev = Math.sqrt(variance);
+
+      // Quality score based on low variance (consistent readings) and reasonable range
+      const consistencyScore = Math.max(0, 100 - (stdDev * 10)); // Lower std dev = higher score
+      const rangeScore = avgTemp >= 10 && avgTemp <= 40 ? 100 : Math.max(0, 100 - Math.abs(avgTemp - 25) * 2);
+      const completenessScore = temperatureReadings.length >= 10 ? 100 : temperatureReadings.length * 10;
+
+      return Math.round((consistencyScore + rangeScore + completenessScore) / 3);
+    } catch (error) {
+      this.logger.error('Failed to calculate data quality:', error);
+      return 50; // Default quality score
+    }
+  }
+
+  /**
+   * Calculate environmental score
+   */
+  private calculateEnvironmentalScore(temperatureData: any): number {
+    const temp = temperatureData.temperature;
+    const humidity = temperatureData.humidity;
+    
+    // Simple environmental scoring based on temperature and humidity
+    let score = 100;
+    
+    // Temperature impact
+    if (temp < 10 || temp > 35) score -= 30;
+    else if (temp < 15 || temp > 30) score -= 15;
+    
+    // Humidity impact
+    if (humidity < 20 || humidity > 80) score -= 20;
+    else if (humidity < 30 || humidity > 70) score -= 10;
+    
+    return Math.max(0, score);
+  }
 } 

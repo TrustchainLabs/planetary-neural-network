@@ -2,9 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BullModule } from '@nestjs/bull';
 import { TemperatureSensorController } from './temperature-sensor.controller';
-import { DHT11SensorController } from './dht11-sensor.controller';
 import { TemperatureSensorService } from './temperature-sensor.service';
-import { DHT11SensorService } from './dht11-sensor.service';
 import { TemperatureSensorModelService } from './temperature-sensor.model.service';
 import { TemperatureSensorConsumer } from './temperature-sensor.consumer';
 import { TemperatureMachineLearningService } from './temperature-ml.service';
@@ -12,6 +10,7 @@ import { TemperatureReading, TemperatureReadingSchema } from './entities/tempera
 import { TemperatureAnalysis, TemperatureAnalysisSchema } from './entities/temperature-analysis.entity';
 import { DHT11Reading, DHT11ReadingSchema } from './entities/dht11-reading.entity';
 import { SmartLedgersModule } from '../../shared/modules/smart-ledgers.module';
+import { TemperatureAnalysisConsumer } from './temperature-analysis.consumer';
 
 @Module({
   imports: [
@@ -33,23 +32,22 @@ import { SmartLedgersModule } from '../../shared/modules/smart-ledgers.module';
     
     // Bull queue for async processing
     BullModule.registerQueue({
-      name: 'temperature-processing',
+      name: 'temperature-analysis',
     }),
     
     // Smart ledgers module for blockchain integration
     SmartLedgersModule,
   ],
-  controllers: [TemperatureSensorController, DHT11SensorController],
+  controllers: [TemperatureSensorController],
   providers: [
     TemperatureSensorService,
-    DHT11SensorService,
     TemperatureSensorModelService,
     TemperatureSensorConsumer,
     TemperatureMachineLearningService,
+    TemperatureAnalysisConsumer,
   ],
   exports: [
     TemperatureSensorService,
-    DHT11SensorService,
     TemperatureSensorModelService,
     TemperatureMachineLearningService,
   ],

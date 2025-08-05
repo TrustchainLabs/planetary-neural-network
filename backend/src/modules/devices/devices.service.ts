@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
+import { InjectModel } from '@nestjs/mongoose';
 import { Queue } from 'bull';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
@@ -7,6 +8,8 @@ import { ReadDevicesDto } from './dto/read-device.dto'
 import { Device } from './entities/device.entity';
 import { DeviceModelService } from './devices.model.service';
 import { GeoMedallionsService } from '../geo-medallions/geo-medallions.service';
+import { Model } from 'mongoose';
+import { Config, ConfigDocument } from '../config/entities/config.entity';
 
 @Injectable()
 export class DevicesService  {
@@ -14,6 +17,7 @@ export class DevicesService  {
   constructor(
     private readonly deviceModelService: DeviceModelService,
     private readonly geoMedallionsService: GeoMedallionsService,
+    @InjectModel('Config') private readonly configModel: Model<ConfigDocument>,
     @InjectQueue('device') private readonly deviceQueue: Queue
   ) {}
 
@@ -54,9 +58,19 @@ export class DevicesService  {
       // Continue with device creation even if medallion update fails
     }
 
+    // Get collection configuration from database
+    const config = await this.configModel.findOne({ 
+      'smart_devices_config': { $exists: true }
+    });
+
+    if (!config || !config.smart_devices_config) {
+      throw new Error('Smart devices collection configuration not found in database');
+    }
+
     const job = await this.deviceQueue.add('process-device-creation', {
       deviceId: device.deviceId,
-      ownerAddress: device.ownerAddress
+      ownerAddress: device.ownerAddress,
+      smartDevicesConfig: config.smart_devices_config
     });
 
     job.finished().then(async (result) => {

@@ -12,6 +12,7 @@ import {
 import { TemperatureSensorService } from './temperature-sensor.service';
 import { CreateTemperatureReadingDto } from './dto/create-temperature-reading.dto';
 import { ReadTemperatureReadingsDto } from './dto/read-temperature-readings.dto';
+import { CreateDHT11ReadingDto } from './dto/create-dht11-reading.dto';
 
 @Controller('temperature-sensor')
 export class TemperatureSensorController {
@@ -173,6 +174,112 @@ export class TemperatureSensorController {
     return {
       status: 'healthy',
       service: 'temperature-sensor',
+      timestamp: new Date(),
+      version: '1.0.0',
+    };
+  }
+
+  // ==================== DHT11 SENSOR ENDPOINTS ====================
+
+  /**
+   * Endpoint for Raspberry Pi 4 to send DHT11 sensor data
+   */
+  @Post('dht11/readings')
+  @HttpCode(HttpStatus.CREATED)
+  async createDHT11Reading(@Body() createDto: CreateDHT11ReadingDto) {
+    this.logger.log('DHT11 reading received from Raspberry Pi', {
+      deviceId: createDto.deviceId,
+      temperature: createDto.temperature,
+      humidity: createDto.humidity,
+    });
+    return await this.temperatureSensorService.createDHT11Reading(createDto);
+  }
+
+  /**
+   * Get DHT11 readings with optional filters
+   */
+  @Get('dht11/readings')
+  async getDHT11Readings(
+    @Query('deviceId') deviceId?: string,
+    @Query('limit') limit?: number,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    this.logger.log('DHT11 readings requested', { deviceId, limit });
+    
+    const start = startDate ? new Date(startDate) : undefined;
+    const end = endDate ? new Date(endDate) : undefined;
+    const limitNum = limit ? parseInt(limit.toString()) : undefined;
+    
+    return await this.temperatureSensorService.findDHT11Readings(deviceId, limitNum, start, end);
+  }
+
+  /**
+   * Get the latest DHT11 reading for a device
+   */
+  @Get('dht11/readings/latest/:deviceId')
+  async getLatestDHT11Reading(@Param('deviceId') deviceId: string) {
+    this.logger.log(`Latest DHT11 reading requested for device: ${deviceId}`);
+    return await this.temperatureSensorService.getLatestDHT11Reading(deviceId);
+  }
+
+  /**
+   * Get DHT11 statistics for a device
+   */
+  @Get('dht11/stats/:deviceId')
+  async getDHT11Stats(
+    @Param('deviceId') deviceId: string,
+    @Query('hours') hours?: number,
+  ) {
+    const hoursToAnalyze = hours ? parseInt(hours.toString()) : 24;
+    this.logger.log(`DHT11 stats requested for device: ${deviceId}, hours: ${hoursToAnalyze}`);
+    return await this.temperatureSensorService.getDHT11Stats(deviceId, hoursToAnalyze);
+  }
+
+  /**
+   * Get DHT11 sensor status and information
+   */
+  @Get('dht11/status')
+  async getDHT11SensorStatus() {
+    this.logger.log('DHT11 sensor status requested');
+    return await this.temperatureSensorService.getDHT11SensorStatus();
+  }
+
+  /**
+   * Manually trigger DHT11 batch processing for a device (for testing)
+   */
+  @Post('dht11/batch/:deviceId/process')
+  @HttpCode(HttpStatus.OK)
+  async processDHT11Batch(@Param('deviceId') deviceId: string) {
+    this.logger.log(`Manual DHT11 batch processing requested for device: ${deviceId}`);
+    await this.temperatureSensorService.processDHT11Batch(deviceId);
+    return {
+      status: 'success',
+      message: 'DHT11 batch processing queued',
+      deviceId,
+      timestamp: new Date(),
+    };
+  }
+
+  /**
+   * Generate mock DHT11 reading for testing
+   */
+  @Post('dht11/mock')
+  @HttpCode(HttpStatus.CREATED)
+  async generateMockDHT11Reading(@Query('deviceId') deviceId?: string) {
+    this.logger.log('Mock DHT11 reading generation requested', { deviceId });
+    const mockDeviceId = deviceId || 'pi4-dht11-001';
+    return await this.temperatureSensorService.generateMockDHT11Reading(mockDeviceId);
+  }
+
+  /**
+   * DHT11 health check endpoint
+   */
+  @Get('dht11/health')
+  async dht11HealthCheck() {
+    return {
+      status: 'healthy',
+      service: 'temperature-sensor-dht11',
       timestamp: new Date(),
       version: '1.0.0',
     };

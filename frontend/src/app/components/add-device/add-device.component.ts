@@ -66,7 +66,7 @@ import { WalletConnectService } from '../../services/wallet-connect.service';
         </ion-item>
 
         <ion-item>
-          <ion-label position="stacked">Owner Address (Optional)</ion-label>
+          <ion-label position="stacked">Owner Address</ion-label>
           <ion-input
             type="text"
             formControlName="owner"

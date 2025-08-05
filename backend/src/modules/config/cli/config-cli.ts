@@ -264,17 +264,27 @@ export class ConfigCommand extends CommandRunner implements OnModuleInit {
    * 
    * @description
    * Initializes a new configuration document with default settings and the specified
-   * topic ID. The configuration includes settings for API rate limiting, administrator
-   * addresses, maintenance mode, and custom metadata.
+   * collection and reward token IDs. The configuration includes settings for API rate limiting, 
+   * administrator addresses, maintenance mode, and custom metadata.
    * 
-   * @param {string} topicId - The blockchain topic ID to associate with this configuration
+   * @param {string} collectionTokenId - The NFT collection token ID for geo medallions
+   * @param {string} rewardTokenId - The fungible token ID for device rewards
    * @returns {Promise<ConfigDocument>} The newly created configuration document
    */
-  private async createConfig(tokenId: string): Promise<ConfigDocument> {
+  private async createConfig(collectionTokenId: string, deviceCollectionTokenId: string, rewardTokenId: string): Promise<ConfigDocument> {
     return this.configModel.create({
       geo_medallions_config: {
-        collection_id: tokenId,
+        collection_id: collectionTokenId,
         nft_metadata_cid: 'ipfs://bafybeigp4ojxfhnvph6mx3kojxnsf7lbzupkum2qqiq4n5t3pht362rdsm/medallion_cid.json',
+      },
+      smart_devices_config: {
+        collection_id: deviceCollectionTokenId,
+        nft_metadata_cid: 'ipfs://bafybeiaysrm3tw7ukgxphbpm6uwixtipam4ypmcn36e5gjjnzzwc6xzg3m/smartdevice_cid.json',
+      },
+      reward_token_config: {
+        token_id: rewardTokenId,
+        reward_per_submission: '10', // 10 tokens per data submission
+        max_daily_rewards: '1000', // 1000 tokens max per device per day
       },
       apiRateLimit: 100,
       adminAddresses: [],
@@ -340,10 +350,23 @@ export class ConfigCommand extends CommandRunner implements OnModuleInit {
       // Create a new config
       this.logger.log('Creating new configuration...');
 
-      let tokenId = null;
+      let collectionTokenId = null;
+      let deviceCollectionTokenId = null;
+      let rewardTokenId = null;
+      
       switch(this.chain) {
         case ChainType.HASHGRAPH:
-          tokenId = await this.hederaCreateTokenCollection();
+          this.logger.log('Creating NFT collection for geo medallions...');
+          collectionTokenId = await this.hederaCreateGeoMedallionCollection();
+          this.logger.log(`NFT collection created: ${collectionTokenId}`);
+
+          this.logger.log('Creating NFT collection for smart devices...');
+          deviceCollectionTokenId = await this.hederaCreateDeviceCollection();
+          this.logger.log(`NFT collection created: ${deviceCollectionTokenId}`);
+          
+          this.logger.log('Creating fungible reward token for device data submissions...');
+          rewardTokenId = await this.hederaCreateRewardToken();
+          this.logger.log(`Reward token created: ${rewardTokenId}`);
           break;
         case ChainType.RIPPLE:
           throw new Error('Ripple is not supported yet');
@@ -352,53 +375,21 @@ export class ConfigCommand extends CommandRunner implements OnModuleInit {
           throw new Error(`Unsupported chain type: ${this.chain}`);
       }
 
-      const config = await this.createConfig(tokenId);
+      const config = await this.createConfig(collectionTokenId, deviceCollectionTokenId, rewardTokenId);
 
       this.logger.log(`New configuration created successfully with ID: ${config._id}`);
+      this.logger.log(`NFT Collection Token ID: ${collectionTokenId}`);
+      this.logger.log(`Reward Token ID: ${rewardTokenId}`);
     } catch (error) {
       this.logger.error('Failed to create configuration', error);
     }
   }
 
-  /**
-   * Creates a Hedera Consensus Service topic for Hashgraph configurations
-   * 
-   * @description
-   * This method handles the Hashgraph-specific implementation of topic creation.
-   * It performs the following steps:
-   * 1. Requests a transaction from the Smart Node SDK
-   * 2. Deserializes the transaction bytes
-   * 3. Signs the transaction with the operator's private key
-   * 4. Submits the transaction to the Hedera network
-   * 5. Retrieves and returns the topic ID from the receipt
-   * 
-   * @param {string} consensusValidator - The consensus validator timestamp to associate with the topic
-   * @returns {Promise<string>} A promise resolving to the created topic ID
-   * @throws {Error} If topic creation fails for any reason
-   */
-  private async hashgraphCreateTopic(consensusValidator: string): Promise<string> {
-    try {
-      let transactionToExecute = await this.smartNodeSdkService.sdk.hashgraph.hcs.createTopic({
-        validatorConsensusTimestamp: consensusValidator.toString()
-      });
-
-      let transaction = Transaction.fromBytes(new Uint8Array(Buffer.from(transactionToExecute)));
-      const signTx = await transaction.sign(PrivateKey.fromStringED25519(this.operator.privateKey));
-
-      const submitTx = await signTx.execute(this.client);
-      const receipt = await submitTx.getReceipt(this.client);
-
-      return receipt.topicId.toString();
-    } catch(error) {
-      throw new Error(`Failed to create topic: ${error}`);
-    }
-  }
-
-  private async hederaCreateTokenCollection() {
+  private async hederaCreateGeoMedallionCollection() {
     try {
       const transactionToExecute = new TokenCreateTransaction()
-        .setTokenName('GeoMedallions')
-        .setTokenSymbol('GEM')
+        .setTokenName('Ecosphere - GeoMedallions')
+        .setTokenSymbol('EGM')
         .setTokenType(TokenType.NonFungibleUnique)
         .setTreasuryAccountId(this.operator.accountId.toString())
         .setAdminKey(PrivateKey.fromStringED25519(this.operator.privateKey))
@@ -416,6 +407,58 @@ export class ConfigCommand extends CommandRunner implements OnModuleInit {
       return receipt.tokenId.toString();
     } catch(error) {
       throw new Error(`Failed to create token collection: ${error}`);
+    }
+  }
+
+  private async hederaCreateDeviceCollection() {
+    try {
+      const transactionToExecute = new TokenCreateTransaction()
+        .setTokenName('Ecosphere - Smart Devices')
+        .setTokenSymbol('ESD')
+        .setTokenType(TokenType.NonFungibleUnique)
+        .setTreasuryAccountId(this.operator.accountId.toString())
+        .setAdminKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .setFreezeKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .setWipeKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .setSupplyKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .freezeWith(this.client);
+
+      let transaction = Transaction.fromBytes(new Uint8Array(Buffer.from(transactionToExecute.toBytes())));
+      const signTx = await transaction.sign(PrivateKey.fromStringED25519(this.operator.privateKey));
+
+      const submitTx = await signTx.execute(this.client);
+      const receipt = await submitTx.getReceipt(this.client);
+
+      return receipt.tokenId.toString();
+    } catch(error) {
+      throw new Error(`Failed to create token collection: ${error}`);
+    }
+  }
+
+  private async hederaCreateRewardToken() {
+    try {
+      const transactionToExecute = new TokenCreateTransaction()
+        .setTokenName('Climate Reward Token')
+        .setTokenSymbol('CRT')
+        .setTokenType(TokenType.FungibleCommon)
+        .setInitialSupply(1000000000) // 1 billion tokens
+        .setDecimals(2) // 2 decimal places
+        .setTreasuryAccountId(this.operator.accountId.toString())
+        .setAdminKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .setFreezeKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .setWipeKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .setSupplyKey(PrivateKey.fromStringED25519(this.operator.privateKey))
+        .freezeWith(this.client);
+
+      let transaction = Transaction.fromBytes(new Uint8Array(Buffer.from(transactionToExecute.toBytes())));
+      const signTx = await transaction.sign(PrivateKey.fromStringED25519(this.operator.privateKey));
+
+      const submitTx = await signTx.execute(this.client);
+      const receipt = await submitTx.getReceipt(this.client);
+
+      return receipt.tokenId.toString();
+    } catch(error) {
+      throw new Error(`Failed to create reward token: ${error}`);
     }
   }
 }

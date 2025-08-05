@@ -3,7 +3,6 @@
   "actionsConditions": {
     "values": [
       "update",
-      "delete",
       "message"
     ],
     "controller": "owner"
@@ -27,21 +26,52 @@
     }
   },
   "customInterface": {
-    "interfaceName": "Device",
+    "interfaceName": "Device data",
     "properties": {
-      "deviceId": "string",
-      "name": "string",
-      "ownerAddress": "string",
-      "sensorData": {
-        "timestamp": "number",
-        "location": {
-          "type": "string",
-          "coordinates": "array"
+        "deviceId": "string",
+        "batchId": "string",
+        "readingCount": "number",
+        "timeRange": {
+          "start": "Date",
+          "end": "Date"
         },
-        "measurements": "object"
-      },
-      "status": "string",
-      "lastSeen": "number"
+        "averageTemperature": "number",
+        "unit": "string",
+        "minimumTemperature": "number",
+        "maximumTemperature": "number",
+        "outliers": [
+          {
+            "value": "number",
+            "timestamp": "string",
+            "deviation": "number"
+          }
+        ],
+        "predictions": [
+          {
+            "predictedValue": "number",
+            "confidence": "number",
+            "anomalyScore": "number",
+            "isAnomaly": "boolean",
+            "trend": "string"
+          }
+        ],
+        "severity": "string",
+        "warnings": ["string"],
+        "aiInsights": "string",
+        "location": {
+          "latitude": "number",
+          "longitude": "number"
+        },
+        "chainTxHash": "string",
+        "analysisTimestamp": "string",
+        "statisticalData": {
+          "standardDeviation": "number",
+          "variance": "number",
+          "trendSlope": "number",
+          "stabilityScore": "number",
+          "mlConfidenceScore": "number",
+          "modelTrained": "boolean"
+        }
     }
   }
-} 
+}

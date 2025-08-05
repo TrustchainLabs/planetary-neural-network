@@ -7,7 +7,7 @@ import { SmartLedgersService } from '@hsuite/smart-ledgers';
 import { SmartConfigService } from '@hsuite/smart-config';
 import { TemperatureAnalysis } from './entities/temperature-analysis.entity';
 
-@Processor('temperature-processing')
+@Processor('temperature-analysis')
 export class TemperatureSensorConsumer {
   private readonly logger = new Logger(TemperatureSensorConsumer.name);
 
