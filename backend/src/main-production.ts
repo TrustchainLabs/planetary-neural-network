@@ -13,7 +13,6 @@ import 'reflect-metadata';
  * 
  * Production mode excludes:
  * - Physical sensor operations
- * - Pi health monitoring
  * - Direct device data collection
  */
 import { NestFactory } from '@nestjs/core';

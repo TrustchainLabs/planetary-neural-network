@@ -5,6 +5,7 @@ import { NodesService } from '../../shared/services/nodes.service';
 import { AuthService } from '../../shared/services/auth.service';
 import { FeatureCollection, Feature, Node } from '../../shared/types';
 import { TabName } from '../../shared/enums';
+import { ViewChild, ElementRef } from '@angular/core';
 import { convertToPointGeoJson } from '../../shared/helpers';
 import { Observable } from 'rxjs';
 import { LoadingOverlayComponent } from '../../components/common/loading-overlay/loading-overlay.component';
@@ -36,6 +37,8 @@ import { MapComponent, PurchaseRequest } from '../../components/map/map.componen
         <app-left-panel
           [selectedNode]="selectedNode"
           [selectedTab]="selectedTab"
+          [selectedHexagon]="selectedHexagon"
+          (coordinateSelectionModeChange)="onCoordinateSelectionModeChange($event)"
         ></app-left-panel>
 
         <div class="map-container">
@@ -44,9 +47,12 @@ import { MapComponent, PurchaseRequest } from '../../components/map/map.componen
             [showHexagonGrid]="showHexagonGrid"
             [ownedHexagons]="ownedHexagons"
             [hexagonSize]="hexagonSize"
+            [coordinateSelectionMode]="coordinateSelectionMode"
             (markerSelect)="onMarkerSelect($event)"
             (hexagonPurchase)="onHexagonPurchase($event)"
             (hexagonRentRequest)="onHexagonRentRequest($event)"
+            (coordinateSelected)="onCoordinateSelected($event)"
+            (medallionSelect)="onMedallionSelect($event)"
           ></app-map>
         </div>
       </div>
@@ -58,7 +64,10 @@ export class HomePage implements OnInit {
   isLoggedIn$: Observable<boolean>;
   nodeData?: FeatureCollection;
   selectedNode?: Feature;
-  selectedTab: TabName = TabName.TEMPERATURE;
+  selectedTab: TabName = TabName.ADD_DEVICE;
+  coordinateSelectionMode: boolean = false;
+  selectedHexagon?: any; // Add selectedHexagon property
+  geoMedallionCreationRef?: any;
 
   // Hexagon-related properties
   showHexagonGrid: boolean = true;
@@ -99,11 +108,6 @@ export class HomePage implements OnInit {
   // Hexagon-related methods
   onHexagonPurchase(purchaseRequest: PurchaseRequest) {
     console.log('Processing hexagon purchase:', purchaseRequest);
-
-    // Here you would typically:
-    // 1. Process payment through your backend
-    // 2. Update blockchain/smart contract
-    // 3. Update local state
 
     // For now, just simulate successful purchase
     this.simulateHexagonPurchase(purchaseRequest.hexagonId);
@@ -158,5 +162,60 @@ export class HomePage implements OnInit {
 
     // In a real app, you'd send this to your backend:
     // this.hexagonService.updateOwnedHexagons(this.ownedHexagons).subscribe();
+  }
+
+  onCoordinateSelectionModeChange(isSelecting: boolean) {
+    this.coordinateSelectionMode = isSelecting;
+  }
+
+  onCoordinateSelected(coordinates: { latitude: number; longitude: number }) {
+    // Find the geo medallion creation component and pass coordinates
+    if (this.selectedTab === TabName.GEO_MEDALLION_CREATION) {
+      console.log('Coordinates selected:', coordinates);
+
+      // Use a custom event to communicate with the geo medallion creation component
+      const event = new CustomEvent('coordinateSelected', {
+        detail: coordinates
+      });
+      document.dispatchEvent(event);
+    }
+  }
+
+    onMedallionSelect(hexagon: any) {
+    console.log('Medallion selected:', hexagon);
+
+    // Store the selected hexagon
+    this.selectedHexagon = hexagon;
+
+    if (hexagon.isOwned) {
+      // Check if medallion has devices
+      const hasDevices = hexagon.devices && hexagon.devices.length > 0;
+
+      if (hasDevices) {
+        // If medallion has devices, switch to DEVICE_MANAGEMENT tab
+        console.log('Medallion is owned with devices, opening device management for:', hexagon.hexId);
+        this.selectedTab = TabName.DEVICE_MANAGEMENT;
+
+        // Dispatch event to filter devices by this medallion
+        setTimeout(() => {
+          const event = new CustomEvent('medallionDeviceFilter', {
+            detail: { hexId: hexagon.hexId, medallion: hexagon }
+          });
+          document.dispatchEvent(event);
+        }, 100);
+            } else {
+        // If medallion is owned but has no devices, switch to ADD_DEVICE tab
+        console.log('Medallion is owned but has no devices, opening add device for:', hexagon.hexId);
+        this.selectedTab = TabName.ADD_DEVICE;
+      }
+    } else if (hexagon.available) {
+      // If medallion is available for purchase, switch to PURCHASE_MEDALLION tab
+      console.log('Medallion is available for purchase, opening purchase for:', hexagon.hexId);
+      this.selectedTab = TabName.PURCHASE_MEDALLION;
+        } else {
+      // If medallion is unavailable, switch to ADD_DEVICE tab (fallback)
+      console.log('Medallion is unavailable, opening add device for:', hexagon.hexId);
+      this.selectedTab = TabName.ADD_DEVICE;
+    }
   }
 }

@@ -8,7 +8,6 @@
  * 
  * Device mode includes:
  * - Temperature sensor monitoring
- * - Pi health monitoring  
  * - Local data processing with AI
  * - Blockchain data submission for rewards
  * - Device management
@@ -38,7 +37,6 @@ import { BullModule } from '@nestjs/bull';
 import { DevicesModule } from './modules/devices/devices.module';
 import { ConfigsModule } from './modules/config/config.module';
 import { SensorsModule } from './modules/sensors/sensors.module';
-import { PiHealthModule } from './modules/pi-health/pi-health.module';
 import { SmartLedgersModule } from './shared/modules/smart-ledgers.module';
 
 import authentication from '../config/modules/authentication';
@@ -64,8 +62,7 @@ import { ISubscription } from '@hsuite/subscriptions-types';
  * 
  * Configures only the modules needed for device operation:
  * - Sensor data collection and processing
- * - Device health monitoring
- * - Blockchain integration for rewards
+ * - Hedera integration for rewards
  * - Background job processing for AI analysis
  */
 @Module({
@@ -145,7 +142,6 @@ export class DeviceAppModule {
         DevicesModule,
         ConfigsModule,
         SensorsModule,
-        PiHealthModule,
         
         // Configure Bull module for background jobs
         BullModule.forRootAsync({

@@ -103,7 +103,7 @@ export class DataCollectionService implements OnModuleInit {
   /**
    * Start data collection for a device
    */
-  async startDataCollection(dto: StartDataCollectionDto): Promise<{ status: string; message: string }> {
+  async startDataCollection(dto: StartDataCollectionDto): Promise<{ status: string; message: string; deviceId: string; isActive: boolean }> {
     this.logger.log(`Starting data collection for device: ${dto.deviceId}`);
 
     // Validate device exists and has necessary configuration
@@ -139,17 +139,25 @@ export class DataCollectionService implements OnModuleInit {
 
     this.activeSessions.set(dto.deviceId, session);
 
+    // Update device status in database
+    await this.deviceModel.updateOne(
+      { deviceId: dto.deviceId },
+      { isActive: true }
+    );
+
     this.logger.log(`Data collection started for device: ${dto.deviceId}`);
     return {
       status: 'success',
-      message: `Data collection started for device ${dto.deviceId}`
+      message: `Data collection started for device ${dto.deviceId}`,
+      deviceId: dto.deviceId,
+      isActive: true
     };
   }
 
   /**
    * Stop data collection for a device
    */
-  async stopDataCollection(dto: StopDataCollectionDto): Promise<{ status: string; message: string }> {
+  async stopDataCollection(dto: StopDataCollectionDto): Promise<{ status: string; message: string; deviceId: string; isActive: boolean }> {
     this.logger.log(`Stopping data collection for device: ${dto.deviceId}`);
 
     // Validate device exists
@@ -177,10 +185,18 @@ export class DataCollectionService implements OnModuleInit {
     // Remove session
     this.activeSessions.delete(dto.deviceId);
 
+    // Update device status in database
+    await this.deviceModel.updateOne(
+      { deviceId: dto.deviceId },
+      { isActive: false }
+    );
+
     this.logger.log(`Data collection stopped for device: ${dto.deviceId}`);
     return {
       status: 'success',
-      message: `Data collection stopped for device ${dto.deviceId}`
+      message: `Data collection stopped for device ${dto.deviceId}`,
+      deviceId: dto.deviceId,
+      isActive: false
     };
   }
 
@@ -286,6 +302,9 @@ export class DataCollectionService implements OnModuleInit {
 
       // Send rewards
       await this.sendRewardTokens(device);
+
+      // Save analysis to database
+      await this.temperatureAnalysisModel.create(analysis);
 
       this.logger.log(`✅ Successfully processed batch ${session.batchCount} for device ${session.deviceId}`);
     } catch (error) {
@@ -473,5 +492,19 @@ export class DataCollectionService implements OnModuleInit {
     const variation = 7.5;
     const noise = (Math.random() - 0.5) * 2; // -1 to 1
     return parseFloat((baseTemp + (Math.random() - 0.5) * variation + noise).toFixed(2));
+  }
+
+  /**
+   * Get analysis
+   */
+  async getAnalysis(deviceId: string): Promise<TemperatureAnalysis[]> {
+    return await this.temperatureAnalysisModel.find({ deviceId }).exec();
+  }
+
+  /**
+   * Get raw data
+   */
+  async getRawData(deviceId: string): Promise<TemperatureReading[]> {
+    return await this.temperatureReadingModel.find({ deviceId }).exec();
   }
 }

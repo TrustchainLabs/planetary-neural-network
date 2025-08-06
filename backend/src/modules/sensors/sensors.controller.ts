@@ -41,6 +41,16 @@ export class SensorsController {
     return await this.dataCollectionService.stopDataCollection(dto);
   }
 
+  @Get('data-collection/raw')
+  async getRawData(@Query('deviceId') deviceId: string) {
+    return await this.dataCollectionService.getRawData(deviceId);
+  }
+
+  @Get('data-collection/analysis')
+  async getAnalysis(@Query('deviceId') deviceId: string) {
+    return await this.dataCollectionService.getAnalysis(deviceId);
+  }
+
   /**
    * Get active data collection sessions
    */
@@ -63,7 +73,7 @@ export class SensorsController {
     this.logger.log(`Data collection status requested for device: ${deviceId}`);
     const status = this.dataCollectionService.getSessionStatus(deviceId);
     return {
-      device_id: deviceId,
+      deviceId: deviceId,
       ...status,
       timestamp: new Date()
     };
@@ -81,61 +91,5 @@ export class SensorsController {
       interval: '10 seconds',
       timestamp: new Date(),
     };
-  }
-
-  /**
-   * Health check endpoint
-   */
-  @Get('health')
-  async healthCheck() {
-    return {
-      status: 'healthy',
-      service: 'sensors-data-collection',
-      timestamp: new Date(),
-      version: '2.0.0',
-    };
-  }
-
-  /**
-   * Debug endpoint to check current data collection status
-   */
-  @Get('debug/status')
-  async getDebugStatus() {
-    const activeSessions = this.dataCollectionService.getActiveSessions();
-    const sessionDetails = activeSessions.map(deviceId => 
-      this.dataCollectionService.getSessionStatus(deviceId)
-    );
-
-    return {
-      debug: true,
-      active_sessions_count: activeSessions.length,
-      active_sessions: activeSessions,
-      session_details: sessionDetails,
-      cron_interval: '10 seconds',
-      batch_size: 10,
-      timestamp: new Date()
-    };
-  }
-
-  /**
-   * Force restart data collection for active devices
-   */
-  @Post('debug/restart-collection')
-  @HttpCode(HttpStatus.OK)
-  async restartDataCollection() {
-    try {
-      await (this.dataCollectionService as any).startDataCollectionForActiveDevices();
-      return {
-        status: 'success',
-        message: 'Data collection restarted for active devices',
-        timestamp: new Date()
-      };
-    } catch (error) {
-      return {
-        status: 'error',
-        message: error.message,
-        timestamp: new Date()
-      };
-    }
   }
 } 

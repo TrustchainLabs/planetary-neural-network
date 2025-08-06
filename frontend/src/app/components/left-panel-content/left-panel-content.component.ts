@@ -1,12 +1,13 @@
-import { Component, Input, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { LineChartComponent } from '../common/line-chart/line-chart.component';
 import { AddDeviceComponent } from '../add-device/add-device.component';
 import { DeviceManagementComponent } from '../device-management/device-management.component';
+import { GeoMedallionCreationComponent } from '../geo-medallion-creation/geo-medallion-creation.component';
+import { PurchaseMedallionComponent } from '../purchase-medallion/purchase-medallion.component';
 import { Feature } from '../../shared/types';
 import { TabName } from '../../shared/enums';
-import { MeasurementsService } from '../../shared/services/measurements.service';
 import { ChartDataPoint, ChartLegends } from '../common/line-chart/line-chart.component';
 import { formatTemperature, formatPressure, formatWindSpeed, formatWindDirection, formatAirQuality } from '../../shared/helpers';
 import * as dayjs from 'dayjs';
@@ -19,19 +20,34 @@ import * as dayjs from 'dayjs';
     IonicModule,
     LineChartComponent,
     AddDeviceComponent,
-    DeviceManagementComponent
+    DeviceManagementComponent,
+    GeoMedallionCreationComponent,
+    PurchaseMedallionComponent
   ],
   template: `
     <div class="content">
       <div *ngIf="selectedTab === TabName.ADD_DEVICE">
-        <app-add-device></app-add-device>
+        <app-add-device [selectedHexagon]="selectedHexagon"></app-add-device>
       </div>
 
       <div *ngIf="selectedTab === TabName.DEVICE_MANAGEMENT">
         <app-device-management></app-device-management>
       </div>
 
-      <div *ngIf="selectedTab !== TabName.ADD_DEVICE && selectedTab !== TabName.DEVICE_MANAGEMENT">
+      <div *ngIf="selectedTab === TabName.GEO_MEDALLION_CREATION">
+        <app-geo-medallion-creation
+          (coordinateSelectionToggle)="onCoordinateSelectionToggle($event)"
+        ></app-geo-medallion-creation>
+      </div>
+
+      <div *ngIf="selectedTab === TabName.PURCHASE_MEDALLION">
+        <app-purchase-medallion
+          [selectedHexagon]="selectedHexagon"
+          (purchaseComplete)="onPurchaseComplete($event)"
+        ></app-purchase-medallion>
+      </div>
+
+      <div *ngIf="selectedTab !== TabName.ADD_DEVICE && selectedTab !== TabName.DEVICE_MANAGEMENT && selectedTab !== TabName.GEO_MEDALLION_CREATION && selectedTab !== TabName.PURCHASE_MEDALLION">
         <div *ngIf="!selectedNode" class="no-selection">
           <div class="placeholder">
             <ion-icon name="analytics-outline" size="large"></ion-icon>
@@ -107,30 +123,30 @@ export class LeftPanelContentComponent implements OnInit, OnChanges {
   @Input() selectedNode?: Feature;
   @Input() selectedTab!: TabName;
   @Input() dateRange: [dayjs.Dayjs, dayjs.Dayjs] = [dayjs().subtract(7, 'days'), dayjs()];
+  @Input() selectedHexagon?: any; // Add input for selected hexagon
+  @Output() coordinateSelectionModeChange = new EventEmitter<boolean>();
 
   TabName = TabName;
   chartData: ChartDataPoint[] = [];
   chartLegends: ChartLegends = {};
   isLoading = false;
 
-  constructor(private measurementsService: MeasurementsService) {}
+  constructor() {}
 
-  ngOnInit() {
-    this.loadChartData();
-  }
+  ngOnInit() {}
 
-  ngOnChanges() {
-    this.loadChartData();
-  }
+  ngOnChanges() {}
 
   getTabTitle(): string {
     switch (this.selectedTab) {
-      case TabName.TEMPERATURE:
-        return 'Temperature';
       case TabName.ADD_DEVICE:
         return 'Add Device';
       case TabName.DEVICE_MANAGEMENT:
         return 'Device Management';
+      case TabName.GEO_MEDALLION_CREATION:
+        return 'Create Geo Medallion';
+      case TabName.PURCHASE_MEDALLION:
+        return 'Purchase Medallion';
       default:
         return 'Climate Data';
     }
@@ -148,7 +164,7 @@ export class LeftPanelContentComponent implements OnInit, OnChanges {
     const measurement = this.selectedNode.properties['latestMeasurement'];
 
     switch (this.selectedTab) {
-      case TabName.TEMPERATURE:
+      case TabName.ADD_DEVICE:
         return measurement.temperature ? formatTemperature(measurement.temperature.value) : 'N/A';
       default:
         return 'N/A';
@@ -163,47 +179,12 @@ export class LeftPanelContentComponent implements OnInit, OnChanges {
     return dayjs(this.selectedNode.properties['latestMeasurement']['createdAt']).format('MMM DD, HH:mm');
   }
 
-  async loadChartData() {
-    if (!this.selectedNode || this.selectedTab === TabName.ADD_DEVICE || this.selectedTab === TabName.DEVICE_MANAGEMENT) {
-      this.chartData = [];
-      return;
-    }
-
-    this.isLoading = true;
-    try {
-      const measurements = await this.measurementsService.getMeasurements({
-        nodeId: this.selectedNode.properties?.['id'] || '',
-        startDate: this.dateRange[0].toISOString(),
-        endDate: this.dateRange[1].toISOString(),
-        measurementType: this.selectedTab
-      }).toPromise();
-
-      if (measurements && measurements.length > 0) {
-        this.chartData = measurements.map(m => ({
-          time: dayjs(m.timestamp).format('MMM DD HH:mm'),
-          value: this.getMeasurementValue(m)
-        }));
-      } else {
-        this.chartData = [];
-      }
-
-      this.chartLegends = {
-        value: this.getTabTitle()
-      };
-    } catch (error) {
-      console.error('Failed to load chart data:', error);
-      this.chartData = [];
-    } finally {
-      this.isLoading = false;
-    }
+  onCoordinateSelectionToggle(isSelecting: boolean) {
+    this.coordinateSelectionModeChange.emit(isSelecting);
   }
 
-  private getMeasurementValue(measurement: any): number {
-    switch (this.selectedTab) {
-      case TabName.TEMPERATURE:
-        return measurement.temperature || 0;
-      default:
-        return 0;
-    }
+  onPurchaseComplete(result: any) {
+    console.log('Purchase completed:', result);
+    // Could emit event to refresh map or show success message
   }
 }

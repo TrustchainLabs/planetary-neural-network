@@ -59,6 +59,18 @@ export interface PurchaseMedallionResponse {
   jobId: string;
 }
 
+export interface UpdateMedallionRequest {
+  price?: number;
+  available?: boolean;
+  ownerAddress?: string;
+  nftTokenId?: string;
+  hederaTopicId?: string;
+  purchaseTransactionId?: string;
+  purchasedAt?: string;
+  mintTransactionId?: string;
+  mintedAt?: string;
+}
+
 export interface GetMedallionsParams {
   page?: number;
   limit?: number;
@@ -131,5 +143,12 @@ export class GeoMedallionsService {
    */
   getMedallionsByOwner(ownerAddress: string): Observable<GeoMedallion[]> {
     return this.http.get<GeoMedallion[]>(`${API_BASE_URL}/geo-medallions/owner/${ownerAddress}`);
+  }
+
+  /**
+   * Update a medallion
+   */
+  updateMedallion(hexId: string, update: UpdateMedallionRequest): Observable<GeoMedallion> {
+    return this.http.patch<GeoMedallion>(`${API_BASE_URL}/geo-medallions/${hexId}`, update);
   }
 }

@@ -1,0 +1,138 @@
+.geo-medallion-creation {
+  .header {
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+    }
+
+    p {
+      font-size: 14px;
+      margin: 0;
+    }
+  }
+
+  .content {
+    .form-section {
+      margin-bottom: 24px;
+
+      h3 {
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 500;
+        margin: 0 0 12px 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #333;
+      }
+
+      .location-selection {
+        margin-bottom: 16px;
+
+        .select-from-map-button {
+          height: 44px;
+          font-weight: 500;
+
+          ion-icon {
+            margin-right: 8px;
+          }
+
+          &[color="danger"] {
+            --background: #eb445a;
+            --color: #ffffff;
+          }
+        }
+      }
+
+      .coordinates-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+
+        @media (max-width: 600px) {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+
+    ion-item {
+      --background: #1a1a1a;
+      --border-color: #333;
+      --color: #ffffff;
+      --placeholder-color: #666;
+      margin-bottom: 8px;
+      border-radius: 4px;
+
+      ion-label {
+        color: #ffffff !important;
+        font-weight: 500;
+      }
+
+      ion-input {
+        --color: #ffffff;
+        --placeholder-color: #666;
+      }
+
+      ion-checkbox {
+        --background: #1a1a1a;
+        --background-checked: #3880ff;
+        --border-color: #333;
+        --border-color-checked: #3880ff;
+        --checkmark-color: #ffffff;
+      }
+
+      &.ion-invalid {
+        --border-color: #eb445a;
+      }
+
+      ion-note[slot="error"] {
+        color: #eb445a;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+    }
+
+    .form-actions {
+      margin-top: 32px;
+
+      ion-button {
+        height: 48px;
+        font-weight: 600;
+
+        &[disabled] {
+          --opacity: 0.6;
+        }
+
+        ion-spinner {
+          margin-right: 8px;
+        }
+      }
+    }
+
+    .admin-section {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #333;
+
+      ion-button {
+        height: 44px;
+        font-weight: 500;
+
+        ion-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+}
+
+// Dark theme adjustments
+body.dark {
+  .geo-medallion-creation {
+    background: #1a1a1a;
+
+    ion-item {
+      --background: #2a2a2a;
+      --border-color: #444;
+    }
+  }
+}

@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { IonicModule, ToastController, AlertController } from '@ionic/angular';
+import { IonicModule, ToastController } from '@ionic/angular';
 import { NodesService } from '../../shared/services/nodes.service';
 import { GeoMedallionsService, GeoMedallion } from '../../shared/services/geo-medallions.service';
 import { AuthService } from '../../shared/services/auth.service';
@@ -105,12 +105,15 @@ import { WalletConnectService } from '../../services/wallet-connect.service';
   `,
   styleUrls: ['./add-device.component.scss']
 })
-export class AddDeviceComponent implements OnInit {
+export class AddDeviceComponent implements OnInit, OnDestroy {
+  @Input() selectedHexagon?: any; // Input for selected hexagon
+
   deviceForm!: FormGroup;
   isLoading = false;
   isLoadingMedallions = false;
   availableMedallions: GeoMedallion[] = [];
   selectedMedallion?: GeoMedallion;
+  private medallionPreFillListener?: (event: any) => void;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -118,8 +121,7 @@ export class AddDeviceComponent implements OnInit {
     private geoMedallionsService: GeoMedallionsService,
     private authService: AuthService,
     private walletConnectService: WalletConnectService,
-    private toastController: ToastController,
-    private alertController: AlertController
+    private toastController: ToastController
   ) {}
 
   ngOnInit() {
@@ -131,12 +133,90 @@ export class AddDeviceComponent implements OnInit {
 
     this.loadAvailableMedallions();
     this.setupFormListeners();
+    this.setupMedallionPreFillListener();
+
+    // Pre-fill medallion from input
+    if (this.selectedHexagon) {
+      this.preFillFromInput();
+    }
+  }
+
+  ngOnDestroy() {
+    // Clean up event listener
+    if (this.medallionPreFillListener) {
+      document.removeEventListener('medallionPreFill', this.medallionPreFillListener);
+    }
+  }
+
+  private setupMedallionPreFillListener() {
+    this.medallionPreFillListener = (event: any) => {
+      this.preFillMedallion(event.detail);
+    };
+    document.addEventListener('medallionPreFill', this.medallionPreFillListener);
   }
 
   private setupFormListeners() {
     this.deviceForm.get('hexId')?.valueChanges.subscribe(hexId => {
       this.selectedMedallion = this.availableMedallions.find(m => m.hexId === hexId);
     });
+  }
+
+    preFillFromInput() {
+    if (!this.selectedHexagon) return;
+
+    console.log('Pre-filling medallion from input:', this.selectedHexagon);
+
+    // Wait for medallions to load if they haven't yet
+    if (this.availableMedallions.length === 0) {
+      // Wait for medallions to load then try again
+      setTimeout(() => this.preFillFromInput(), 500);
+      return;
+    }
+
+    // Find the medallion by hexId
+    const medallion = this.availableMedallions.find(m => m.hexId === this.selectedHexagon.hexId);
+
+    if (medallion) {
+      // Set the form control value
+      this.deviceForm.patchValue({
+        hexId: medallion.hexId
+      });
+
+      // Update selected medallion
+      this.selectedMedallion = medallion;
+
+      console.log('Medallion pre-filled successfully from input:', medallion);
+    } else {
+      console.warn('Medallion not found in available medallions:', this.selectedHexagon.hexId);
+    }
+  }
+
+  preFillMedallion(hexagonData: any) {
+    console.log('Pre-filling medallion from event (fallback):', hexagonData);
+
+    // Wait for medallions to load if they haven't yet
+    if (this.availableMedallions.length === 0) {
+      // Wait for medallions to load then try again
+      setTimeout(() => this.preFillMedallion(hexagonData), 500);
+      return;
+    }
+
+    // Find the medallion by hexId
+    const medallion = this.availableMedallions.find(m => m.hexId === hexagonData.hexId);
+
+    if (medallion) {
+      // Set the form control value
+      this.deviceForm.patchValue({
+        hexId: medallion.hexId
+      });
+
+      // Update selected medallion
+      this.selectedMedallion = medallion;
+
+      console.log('Medallion pre-filled successfully from event:', medallion);
+    } else {
+      console.warn('Medallion not found in available medallions:', hexagonData.hexId);
+    }
   }
 
   hederaAddressValidator(control: any) {

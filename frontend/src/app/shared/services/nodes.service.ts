@@ -40,6 +40,58 @@ export interface GetDevicesParams {
   includeLatestMeasurement?: boolean;
 }
 
+export interface SensorReading {
+  _id: string;
+  deviceId: string;
+  value: number;
+  unit: string;
+  timestamp: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SensorAnalysis {
+  _id: string;
+  deviceId: string;
+  batchId: string;
+  readingCount: number;
+  timeRange: {
+    start: string;
+    end: string;
+  };
+  averageTemperature: number;
+  unit: string;
+  minimumTemperature: number;
+  maximumTemperature: number;
+  outliers: any[];
+  predictions: Array<{
+    predictedValue: number;
+    confidence: number;
+    anomalyScore: number;
+    isAnomaly: boolean;
+    trend: string;
+  }>;
+  severity: string;
+  warnings: string[];
+  aiInsights: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  chainTxHash: string;
+  analysisTimestamp: string;
+  statisticalData: {
+    standardDeviation: number;
+    variance: number;
+    trendSlope: number;
+    stabilityScore: number;
+    mlConfidenceScore: number;
+    modelTrained: boolean;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -99,9 +151,62 @@ export class NodesService {
   }
 
   /**
-   * Trigger device control action via WebSocket
+   * Start data collection for a device
    */
-  triggerDevice(deviceId: string, action: 'start' | 'stop'): Observable<any> {
-    return this.http.post(`${API_BASE_URL}/devices/${deviceId}/trigger`, { action });
+  startDataCollection(deviceId: string, privateKey: string): Observable<any> {
+    return this.http.post(`${API_BASE_URL}/sensors/data-collection/start`, {
+      deviceId,
+      privateKey
+    });
+  }
+
+  /**
+   * Stop data collection for a device
+   */
+  stopDataCollection(deviceId: string, privateKey: string): Observable<any> {
+    return this.http.post(`${API_BASE_URL}/sensors/data-collection/stop`, {
+      deviceId,
+      privateKey
+    });
+  }
+
+  /**
+   * Get data collection status for a device
+   */
+  getDataCollectionStatus(deviceId: string): Observable<any> {
+    return this.http.get(`${API_BASE_URL}/sensors/data-collection/status/${deviceId}`);
+  }
+
+  /**
+   * Get raw sensor data for a device
+   */
+  getRawSensorData(deviceId: string): Observable<SensorReading[]> {
+    return this.http.get<SensorReading[]>(`${API_BASE_URL}/sensors/data-collection/raw?deviceId=${deviceId}`);
+  }
+
+  /**
+   * Get sensor analysis for a device
+   */
+  getSensorAnalysis(deviceId: string): Observable<SensorAnalysis[]> {
+    return this.http.get<SensorAnalysis[]>(`${API_BASE_URL}/sensors/data-collection/analysis?deviceId=${deviceId}`);
+  }
+
+  /**
+   * Get all sensor analysis
+   */
+  getAllSensorAnalysis(): Observable<SensorAnalysis[]> {
+    return this.http.get<SensorAnalysis[]>(`${API_BASE_URL}/sensors/data-collection/all`);
+  }
+
+  /**
+   * Get wallet balance for reward tokens (placeholder - would need actual endpoint)
+   */
+  getWalletBalance(walletAddress: string): Observable<{ balance: number, symbol: string }> {
+    // This would need to be implemented on the backend
+    // For now, return a mock response
+    return new Observable(observer => {
+      observer.next({ balance: 0, symbol: 'REWARD' });
+      observer.complete();
+    });
   }
 }

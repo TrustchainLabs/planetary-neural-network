@@ -1,0 +1,181 @@
+.purchase-medallion {
+  .header {
+    margin-bottom: 24px;
+    text-align: center;
+
+    h2 {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+    }
+
+    p {
+      color: #a0a0a0;
+      font-size: 14px;
+      margin: 0;
+    }
+  }
+
+  .medallion-info {
+    margin-bottom: 24px;
+
+    .info-card {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #333;
+
+      .medallion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+
+        h3 {
+          color: #ffffff;
+          font-size: 18px;
+          font-weight: 500;
+          margin: 0;
+        }
+
+        ion-badge {
+          --background: #28a745;
+          --color: #ffffff;
+        }
+      }
+
+      .medallion-details {
+        .detail-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 0;
+          border-bottom: 1px solid #2a2a2a;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          .label {
+            color: #a0a0a0;
+            font-size: 14px;
+          }
+
+          .value {
+            color: #ffffff;
+            font-weight: 500;
+
+            &.price {
+              color: #3880ff;
+              font-size: 16px;
+              font-weight: 600;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .content {
+    .form-section {
+      margin-bottom: 24px;
+
+      h3 {
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 500;
+        margin: 0 0 16px 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #333;
+      }
+
+      .purchase-summary {
+        background: #1a1a1a;
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid #333;
+
+        h3 {
+          margin-bottom: 16px;
+          border-bottom: 1px solid #333;
+          padding-bottom: 8px;
+        }
+
+        .summary-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 0;
+          color: #a0a0a0;
+
+          &.total {
+            border-top: 1px solid #333;
+            margin-top: 8px;
+            padding-top: 16px;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 16px;
+
+            span:last-child {
+              color: #3880ff;
+            }
+          }
+        }
+      }
+    }
+
+    ion-item {
+      --background: #1a1a1a;
+      --border-color: #333;
+      --color: #ffffff;
+      margin-bottom: 12px;
+      border-radius: 8px;
+
+      ion-label {
+        color: #a0a0a0;
+        font-size: 14px;
+      }
+
+      ion-input {
+        --color: #ffffff;
+        --placeholder-color: #666;
+      }
+
+      &.ion-invalid {
+        --border-color: #e74c3c;
+      }
+    }
+
+    .error-message {
+      color: #e74c3c;
+      font-size: 12px;
+      margin: -8px 0 16px 16px;
+    }
+
+    .form-actions {
+      margin-top: 32px;
+
+      ion-button {
+        height: 48px;
+        font-weight: 500;
+        --border-radius: 8px;
+
+        ion-spinner {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+}
+
+// Dark mode adjustments
+@media (prefers-color-scheme: dark) {
+  .purchase-medallion {
+    .medallion-info .info-card,
+    .content .form-section .purchase-summary {
+      background: rgba(26, 26, 26, 0.95);
+      backdrop-filter: blur(10px);
+    }
+  }
+}

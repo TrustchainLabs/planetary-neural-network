@@ -26,14 +26,6 @@ import { TabName } from '../../../shared/enums';
       </a>
 
       <div class="tabs">
-        <app-tab
-          [name]="TabName.TEMPERATURE"
-          tooltip="Temperature"
-          src="assets/icons/thermostat.svg"
-          alt="Thermostat"
-          [active]="selectedTab === TabName.TEMPERATURE"
-          (tabClick)="onTabSelect($event)"
-        ></app-tab>
 
         <app-tab
           className="add-device"
@@ -52,6 +44,26 @@ import { TabName } from '../../../shared/enums';
           src="assets/icons/gauge.svg"
           alt="Gauge"
           [active]="selectedTab === TabName.DEVICE_MANAGEMENT"
+          (tabClick)="onTabSelect($event)"
+        ></app-tab>
+
+        <app-tab
+          className="geo-medallion-creation"
+          [name]="TabName.GEO_MEDALLION_CREATION"
+          tooltip="Create Geo Medallion (Admin)"
+          src="assets/icons/compass.svg"
+          alt="Compass"
+          [active]="selectedTab === TabName.GEO_MEDALLION_CREATION"
+          (tabClick)="onTabSelect($event)"
+        ></app-tab>
+
+        <app-tab
+          className="geo-medallion-purchase"
+          [name]="TabName.PURCHASE_MEDALLION"
+          tooltip="Purchase Geo Medallion"
+          src="assets/icons/compass.svg"
+          alt="Compass"
+          [active]="selectedTab === TabName.PURCHASE_MEDALLION"
           (tabClick)="onTabSelect($event)"
         ></app-tab>
       </div>

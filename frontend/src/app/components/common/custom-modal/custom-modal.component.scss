@@ -1,0 +1,168 @@
+// Simple modal styling consistent with app design
+.modal-content {
+  --background: #131313;
+  --color: var(--text-color);
+}
+
+.modal-body {
+  padding: 20px;
+
+  .sub-header {
+    margin-bottom: 16px;
+
+    h3 {
+      color: var(--text-color);
+      font-size: 16px;
+      font-weight: 500;
+      margin: 0;
+    }
+  }
+
+  .message {
+    margin-bottom: 20px;
+    color: var(--text-color);
+    line-height: 1.5;
+
+    strong {
+      color: var(--text-color);
+      font-weight: 600;
+    }
+  }
+
+  .modal-form {
+    .input-group {
+      margin-bottom: 16px;
+
+      ion-item {
+        --background: #2a2a2a;
+        --border-color: var(--border-color);
+        --color: var(--text-color);
+        --placeholder-color: #888888;
+        border-radius: 4px;
+        margin-bottom: 8px;
+
+        ion-label {
+          color: var(--text-color) !important;
+          font-weight: 500;
+          margin-bottom: 8px;
+        }
+
+        ion-input,
+        ion-textarea {
+          --color: var(--text-color);
+          --placeholder-color: #888888;
+        }
+
+        ion-checkbox {
+          --background: #2a2a2a;
+          --background-checked: var(--primary-color);
+          --border-color: var(--border-color);
+          --border-color-checked: var(--primary-color);
+          --checkmark-color: #ffffff;
+        }
+
+        &.ion-invalid {
+          --border-color: #eb445a;
+        }
+
+        ion-note[slot="error"] {
+          color: #eb445a;
+          font-size: 12px;
+          margin-top: 4px;
+        }
+      }
+    }
+  }
+}
+
+// Header styling
+ion-header {
+  ion-toolbar {
+    --background: #2a2a2a;
+    --color: var(--text-color);
+    --border-color: var(--border-color);
+
+    ion-title {
+      color: var(--text-color);
+      font-weight: 500;
+    }
+
+    ion-button {
+      --color: var(--text-color);
+
+      &:hover {
+        --color: #ffffff;
+      }
+    }
+  }
+}
+
+// Footer styling
+ion-footer {
+  ion-toolbar {
+    --background: #2a2a2a;
+    --border-color: var(--border-color);
+    padding: 0 16px;
+
+    .button-container {
+      display: flex;
+      gap: 12px;
+      padding: 12px 0;
+      justify-content: flex-end;
+
+      ion-button {
+        min-width: 80px;
+        height: 40px;
+        font-weight: 500;
+
+        &[fill="outline"] {
+          --color: var(--text-color);
+          --border-color: var(--border-color);
+
+          &:hover {
+            --background: #404040;
+          }
+        }
+
+        &[color="primary"] {
+          --background: var(--primary-color);
+          --color: #ffffff;
+
+          &:hover {
+            --background: var(--primary-hover-color);
+          }
+        }
+
+        &[color="danger"] {
+          --background: #eb445a;
+          --color: #ffffff;
+
+          &:hover {
+            --background: #dc2626;
+          }
+        }
+
+        &[disabled] {
+          --color: #666666;
+          pointer-events: none;
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .modal-body {
+    padding: 16px;
+  }
+
+  ion-footer ion-toolbar .button-container {
+    padding: 0 16px 16px;
+
+    ion-button {
+      flex: 1;
+      min-width: auto;
+    }
+  }
+}

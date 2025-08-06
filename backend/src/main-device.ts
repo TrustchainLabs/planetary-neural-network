@@ -8,8 +8,7 @@ import 'reflect-metadata';
  * - Sensor data collection and processing
  * - Local AI analysis of climate data
  * - Blockchain submission for rewards
- * - Device health monitoring
- * 
+   * 
  * Device mode excludes:
  * - Frontend serving (no UI needed)
  * - Geo medallion operations
@@ -90,8 +89,7 @@ export async function bootstrap() {
 
   console.log(`📡 Device mode running on port ${port}`);
   console.log('🌡️ Temperature sensors active');
-  console.log('💚 Pi health monitoring active');
-  console.log('🔗 Blockchain integration ready');
+  console.log('🔗 Hedera integration ready');
 
   return app;
 }

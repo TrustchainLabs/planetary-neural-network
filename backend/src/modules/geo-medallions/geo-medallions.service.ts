@@ -394,9 +394,8 @@ export class GeoMedallionsService {
       const medallion = await this.geoMedallionModel.findOneAndUpdate(
         { hexId },
         { 
-          $push: { 
-            devices: deviceData 
-          } 
+          $push: { devices: deviceData },
+          $set: { available: false }
         },
         { new: true }
       );

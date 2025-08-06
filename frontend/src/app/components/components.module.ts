@@ -8,6 +8,9 @@ import { WalletConnectionComponent } from './wallet-connection/wallet-connection
 import { WalletsSessionsComponent } from './sessions-modal/sessions-modal.component';
 import { WalletsModalComponent } from './wallets-modal/wallets-modal.component';
 import { DeviceManagementComponent } from './device-management/device-management.component';
+import { GeoMedallionCreationComponent } from './geo-medallion-creation/geo-medallion-creation.component';
+import { PurchaseMedallionComponent } from './purchase-medallion/purchase-medallion.component';
+import { CustomModalComponent } from './common/custom-modal/custom-modal.component';
 
 @NgModule({
   imports: [
@@ -20,6 +23,9 @@ import { DeviceManagementComponent } from './device-management/device-management
     WalletsSessionsComponent,
     WalletsModalComponent,
     DeviceManagementComponent,
+    GeoMedallionCreationComponent,
+    PurchaseMedallionComponent,
+    CustomModalComponent,
   ],
   declarations: [],
   exports: [
@@ -28,6 +34,9 @@ import { DeviceManagementComponent } from './device-management/device-management
     WalletsSessionsComponent,
     WalletsModalComponent,
     DeviceManagementComponent,
+    GeoMedallionCreationComponent,
+    PurchaseMedallionComponent,
+    CustomModalComponent,
   ],
 })
 export class ComponentsModule {}

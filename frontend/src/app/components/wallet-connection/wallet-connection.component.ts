@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, AlertController, LoadingController, ModalController, ToastController } from '@ionic/angular';
+import { IonicModule, LoadingController, ModalController, ToastController } from '@ionic/angular';
 import { WalletConnectService, WC_Session } from '../../services/wallet-connect.service';
 import { WalletsModalComponent } from '../wallets-modal/wallets-modal.component';
 import { WalletsSessionsComponent } from '../sessions-modal/sessions-modal.component';
 import { base64StringToSignatureMap } from '@kabila-tech/hedera-wallet-connect';
 import * as lodash from 'lodash';
+import { CustomModalService } from '../../services/custom-modal.service';
 import { AxiosService } from '../../services/axios/axios.service';
 import { LoggerUtil } from '../../../utils/logger/logger';
 
@@ -24,7 +25,7 @@ export class WalletConnectionComponent implements OnInit {
   constructor(
     private loadingController: LoadingController,
     private toastController: ToastController,
-    private alertController: AlertController,
+    private customModalService: CustomModalService,
     private walletConnectService: WalletConnectService,
     private modalController: ModalController
   ) {}
@@ -284,28 +285,6 @@ export class WalletConnectionComponent implements OnInit {
    * @returns A promise that resolves to true if confirmed, false otherwise
    */
   private async showConfirmation(header: string, message: string): Promise<boolean> {
-    return new Promise<boolean>(async (resolve) => {
-      const alert = await this.alertController.create({
-        header,
-        message,
-        buttons: [
-          {
-            text: 'Cancel',
-            role: 'cancel',
-            handler: () => {
-              resolve(false);
-            }
-          },
-          {
-            text: 'Authenticate',
-            handler: () => {
-              resolve(true);
-            }
-          }
-        ]
-      });
-
-      await alert.present();
-    });
+    return await this.customModalService.presentConfirm(header, message, 'Authenticate', 'Cancel');
   }
 }

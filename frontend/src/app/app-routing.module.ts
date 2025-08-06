@@ -19,6 +19,11 @@ const routes: Routes = [
     loadChildren: () => import('./pages/login/login.module').then(m => m.LoginPageModule),
     canActivate: [GuestGuard]
   },
+  {
+    path: 'admin/geo-medallions',
+    loadChildren: () => import('./pages/geo-medallions-admin/geo-medallions-admin.module').then(m => m.GeoMedallionsAdminPageModule),
+    canActivate: [AuthGuard]
+  },
 
   // Keep existing routes for backward compatibility
   {

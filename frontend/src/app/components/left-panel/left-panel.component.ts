@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { SidePanelComponent } from '../common/side-panel/side-panel.component';
@@ -27,33 +27,14 @@ import * as dayjs from 'dayjs';
           <div class="title-key">Device</div>
           <div class="title-value">{{ selectedNode.properties['uuid'] }}</div>
         </div>
-
-                <div class="date-range">
-          <ion-button
-            fill="outline"
-            size="small"
-            (click)="setDateRange('7d')"
-            [class.active]="isActiveRange('7d')"
-          >7D</ion-button>
-          <ion-button
-            fill="outline"
-            size="small"
-            (click)="setDateRange('30d')"
-            [class.active]="isActiveRange('30d')"
-          >30D</ion-button>
-          <ion-button
-            fill="outline"
-            size="small"
-            (click)="setDateRange('90d')"
-            [class.active]="isActiveRange('90d')"
-          >90D</ion-button>
-        </div>
       </div>
 
       <app-left-panel-content
         [selectedNode]="selectedNode"
         [dateRange]="dateRange"
         [selectedTab]="selectedTab"
+        [selectedHexagon]="selectedHexagon"
+        (coordinateSelectionModeChange)="onCoordinateSelectionModeChange($event)"
       ></app-left-panel-content>
     </app-side-panel>
   `,
@@ -62,6 +43,8 @@ import * as dayjs from 'dayjs';
 export class LeftPanelComponent implements OnInit {
   @Input() selectedNode?: Feature;
   @Input() selectedTab!: TabName;
+  @Input() selectedHexagon?: any; // Add input for selected hexagon
+  @Output() coordinateSelectionModeChange = new EventEmitter<boolean>();
 
   TabName = TabName;
   startDateISO!: string;
@@ -81,31 +64,7 @@ export class LeftPanelComponent implements OnInit {
     this.maxDateISO = dayjs().toISOString();
   }
 
-  setDateRange(range: '7d' | '30d' | '90d') {
-    const now = dayjs();
-    switch (range) {
-      case '7d':
-        this.dateRange = [now.subtract(7, 'days'), now];
-        break;
-      case '30d':
-        this.dateRange = [now.subtract(30, 'days'), now];
-        break;
-      case '90d':
-        this.dateRange = [now.subtract(90, 'days'), now];
-        break;
-    }
-    this.updateDateStrings();
-  }
-
-  isActiveRange(range: '7d' | '30d' | '90d'): boolean {
-    const now = dayjs();
-    const diffDays = now.diff(this.dateRange[0], 'days');
-
-    switch (range) {
-      case '7d': return diffDays >= 6 && diffDays <= 8;
-      case '30d': return diffDays >= 29 && diffDays <= 31;
-      case '90d': return diffDays >= 89 && diffDays <= 91;
-      default: return false;
-    }
+  onCoordinateSelectionModeChange(isSelecting: boolean) {
+    this.coordinateSelectionModeChange.emit(isSelecting);
   }
 }

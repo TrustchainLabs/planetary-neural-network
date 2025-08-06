@@ -12,10 +12,6 @@
  * - Wallet connection and authentication
  * - Frontend static file serving
  * - User reward tracking
- * 
- * Excluded from production mode:
- * - Temperature sensor monitoring (no physical sensors)
- * - Pi health monitoring (not running on Pi)
  */
 import { DynamicModule, Module } from '@nestjs/common';
 import { SmartAppController } from './smart-app.controller';

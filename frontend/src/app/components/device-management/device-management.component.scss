@@ -19,6 +19,36 @@
       color: var(--ion-color-medium);
       font-size: 14px;
     }
+
+    .medallion-filter {
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+
+      ion-chip {
+        --background: rgba(56, 128, 255, 0.1);
+        --color: #3880ff;
+        --border-radius: 16px;
+        margin: 0;
+
+        ion-icon {
+          font-size: 16px;
+
+          &[name="close-circle"] {
+            cursor: pointer;
+            margin-left: 4px;
+
+            &:hover {
+              color: #ff4757;
+            }
+          }
+        }
+
+        ion-label {
+          font-weight: 500;
+        }
+      }
+    }
   }
 
   .content {

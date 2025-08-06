@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, ViewChild, OnChanges, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, AlertController } from '@ionic/angular';
+import { IonicModule } from '@ionic/angular';
 import { FeatureCollection, Feature } from '../../shared/types';
 import { GeometryType } from '../../shared/enums';
 import { MAPBOX_CONFIG, HASHSCAN_URL } from '../../shared/constants';
 import { GeoMedallionsService, GeoMedallion, PurchaseMedallionRequest } from '../../shared/services/geo-medallions.service';
 import { NodesService, Device } from '../../shared/services/nodes.service';
+import { CustomModalService } from '../../services/custom-modal.service';
 import { MeasurementsService } from '../../shared/services/measurements.service';
 import * as turf from '@turf/turf';
 
@@ -57,81 +58,13 @@ import * as mapboxgl from 'mapbox-gl';
         <p>Loading medallions and devices...</p>
       </div>
 
-      <!-- Map Controls - Right Side -->
-      <div class="map-controls-right">
-        <ion-button
-          fill="solid"
-          size="small"
-          (click)="toggleHexagonGrid()"
-          [color]="showHexagonGrid ? 'primary' : 'medium'">
-          <ion-icon name="hexagon-outline" slot="start"></ion-icon>
-          {{ showHexagonGrid ? 'Hide' : 'Show' }} Grid
-        </ion-button>
-
-        <ion-button
-          fill="outline"
-          size="small"
-          (click)="openPurchaseModal()"
-          [disabled]="!showHexagonGrid">
-          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
-          Buy Hexagon
-        </ion-button>
+      <!-- Coordinate Selection Mode Indicator -->
+      <div class="coordinate-selection-overlay" *ngIf="coordinateSelectionMode">
+        <div class="selection-indicator">
+          <ion-icon name="location-outline"></ion-icon>
+          <p>Click on the map to select coordinates</p>
+        </div>
       </div>
-
-      <!-- Hexagon Info Panel - Right Side -->
-<div class="hexagon-info-panel" *ngIf="selectedHexagonData">
-  <div class="panel-content">
-    <div class="panel-header">
-      <ion-icon name="hexagon-outline"></ion-icon>
-      <span>{{ selectedHexagonData.hexId }}</span>
-    </div>
-    <div class="panel-details">
-      <div class="price">{{ selectedHexagonData.price || 1 }} HBAR</div>
-      <div class="status" [ngClass]="selectedHexagonData.isOwned ? 'owned' : (selectedHexagonData.available ? 'available' : 'unavailable')">
-        {{ selectedHexagonData.isOwned ? 'Owned' : (selectedHexagonData.available ? 'Available' : 'Unavailable') }}
-      </div>
-      <div class="devices-info" *ngIf="selectedHexagonData.devices && selectedHexagonData.devices.length > 0">
-        <ion-icon name="hardware-chip-outline"></ion-icon>
-        <span>{{ selectedHexagonData.devices.length }} device(s)</span>
-      </div>
-      <div class="owner-info" *ngIf="selectedHexagonData.owner">
-        <small>Owner: {{ selectedHexagonData.owner }}</small>
-      </div>
-    </div>
-    <div class="panel-actions">
-      <ion-button
-        *ngIf="!selectedHexagonData.isOwned && selectedHexagonData.available"
-        fill="solid"
-        size="small"
-        color="primary"
-        (click)="openPurchaseModal(selectedHexagonData)">
-        Purchase
-      </ion-button>
-      <ion-button
-        *ngIf="selectedHexagonData.isOwned"
-        fill="outline"
-        size="small"
-        color="secondary"
-        (click)="openPurchaseModal(selectedHexagonData)">
-        Request Rental
-      </ion-button>
-      <ion-button
-        fill="clear"
-        size="small"
-        (click)="selectedHexagonData = undefined">
-        Close
-      </ion-button>
-    </div>
-  </div>
-</div>
-
-      <!-- Hexagonal Grid Component -->
-      <!-- Will be added programmatically via the component logic -->
-
-      <!-- Purchase Modal -->
-      <!-- Will be implemented as a service-based modal -->
-
-
     </div>
   `,
   styleUrls: ['./map.component.scss']
@@ -144,10 +77,13 @@ export class MapComponent implements OnInit, OnDestroy {
   @Input() showHexagonGrid: boolean = false;
   @Input() ownedHexagons: string[] = [];
   @Input() hexagonSize: number = 5; // Fixed 5km hexagons for expanded coverage
+  @Input() coordinateSelectionMode: boolean = false; // New input for coordinate selection mode
 
   @Output() markerSelect = new EventEmitter<Feature | undefined>();
   @Output() hexagonPurchase = new EventEmitter<PurchaseRequest>();
   @Output() hexagonRentRequest = new EventEmitter<{ hexagonId: string; ownerAddress?: string }>();
+  @Output() coordinateSelected = new EventEmitter<{ latitude: number; longitude: number }>(); // New output for coordinate selection
+  @Output() medallionSelect = new EventEmitter<HexagonData>(); // New output for medallion selection for device addition
 
   public map!: mapboxgl.Map;
   private markers: mapboxgl.Marker[] = [];
@@ -185,7 +121,7 @@ export class MapComponent implements OnInit, OnDestroy {
   private readonly KL_CENTER = { lat: 3.1319, lng: 101.6841 }; // Kuala Lumpur center
 
   constructor(
-    private alertController: AlertController,
+    private customModalService: CustomModalService,
     private geoMedallionsService: GeoMedallionsService,
     private nodesService: NodesService,
     private measurementsService: MeasurementsService
@@ -550,6 +486,9 @@ export class MapComponent implements OnInit, OnDestroy {
           });
         }
       }
+
+      // Setup coordinate selection click handler
+      this.setupCoordinateSelectionHandler();
 
       // Ensure map fills the container properly
       setTimeout(() => {
@@ -989,25 +928,6 @@ export class MapComponent implements OnInit, OnDestroy {
     // Labels remain hidden unless hovering
   }
 
-  // Hexagon-related methods
-  toggleHexagonGrid() {
-    this.showHexagonGrid = !this.showHexagonGrid;
-    if (this.showHexagonGrid) {
-      // Generate hexagon grid from loaded medallion data
-      if (this.medallions.length > 0) {
-        this.generateHexagonGridFromMedallions();
-        this.addHexagonGridToMap();
-        this.setupHexagonEventHandlers();
-      } else {
-        // Load data first if not already loaded
-        this.loadData();
-      }
-    } else {
-      // Hide and clean up
-      this.removeHexagonGridFromMap();
-    }
-  }
-
   // Center map on Kuala Lumpur
   private centerMapOnKL() {
     this.map.flyTo({
@@ -1021,6 +941,9 @@ export class MapComponent implements OnInit, OnDestroy {
     console.log('Hexagon clicked:', hexagon);
     this.selectedHexagon = hexagon.id;
     this.selectedHexagonData = hexagon;
+
+    // Emit medallion selection event to open add device tab with pre-filled medallion
+    this.medallionSelect.emit(hexagon);
   }
 
   onHexagonHover(hexagon: HexagonData | null) {
@@ -1039,176 +962,121 @@ export class MapComponent implements OnInit, OnDestroy {
     const hexagonData = this.selectedHexagonData;
     if (!hexagonData) return;
 
-    if (hexagonData.isOwned) {
-      await this.showRentDialog(hexagonData);
-    } else {
+    if (!hexagonData.isOwned) {
       await this.showPurchaseDialog(hexagonData);
     }
   }
 
   private async showHexagonIdInput() {
-    const alert = await this.alertController.create({
-      header: 'Enter Hexagon ID',
-      inputs: [
-        {
-          name: 'hexagonId',
-          type: 'number',
-          placeholder: 'Enter hexagon ID (e.g. 12345)'
-        }
-      ],
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Find',
-          handler: (data) => {
-            if (data.hexagonId) {
-              this.onHexagonSearch(data.hexagonId);
-            }
-          }
-        }
-      ]
-    });
+    const inputs = [
+      {
+        name: 'hexagonId',
+        type: 'number' as const,
+        label: 'Hexagon ID',
+        placeholder: 'Enter hexagon ID (e.g. 12345)',
+        required: true
+      }
+    ];
 
-    await alert.present();
+    const data = await this.customModalService.presentInput(
+      'Enter Hexagon ID',
+      inputs,
+      undefined,
+      'Find',
+      'Cancel'
+    );
+
+    if (data && data.hexagonId) {
+      this.onHexagonSearch(data.hexagonId);
+    }
   }
 
   private async showPurchaseDialog(hexagon: HexagonData) {
-    const alert = await this.alertController.create({
-      header: `Purchase Medallion ${hexagon.hexId}`,
-      message: `
-        <div style="text-align: center;">
-          <p><strong>Hex ID:</strong> ${hexagon.hexId}</p>
-          <p><strong>Location:</strong> ${hexagon.center[1].toFixed(4)}, ${hexagon.center[0].toFixed(4)}</p>
-          <p><strong>Price:</strong> ${hexagon.price || 1} HBAR</p>
-          <p><strong>Status:</strong> ${hexagon.available ? 'Available' : 'Unavailable'}</p>
-          ${hexagon.devices && hexagon.devices.length > 0 ?
-            `<p><strong>Devices:</strong> ${hexagon.devices.length} device(s)</p>` :
-            '<p><strong>Devices:</strong> None</p>'
-          }
-        </div>
-      `,
-      inputs: [
-        {
-          name: 'buyerAddress',
-          type: 'text',
-          placeholder: 'Your wallet address (0.0.xxxxx)',
-          value: ''
-        },
-        {
-          name: 'transactionId',
-          type: 'text',
-          placeholder: 'Payment transaction ID',
-          value: ''
+    const message = `
+      <div style="text-align: center;">
+        <p><strong>Hex ID:</strong> ${hexagon.hexId}</p>
+        <p><strong>Location:</strong> ${hexagon.center[1].toFixed(4)}, ${hexagon.center[0].toFixed(4)}</p>
+        <p><strong>Price:</strong> ${hexagon.price || 1} HBAR</p>
+        <p><strong>Status:</strong> ${hexagon.available ? 'Available' : 'Unavailable'}</p>
+        ${hexagon.devices && hexagon.devices.length > 0 ?
+          `<p><strong>Devices:</strong> ${hexagon.devices.length} device(s)</p>` :
+          '<p><strong>Devices:</strong> None</p>'
         }
-      ],
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Purchase',
-          handler: async (data) => {
-            if (!data.buyerAddress || !data.transactionId) {
-              console.error('Buyer address and transaction ID are required');
-              return false;
-            }
+      </div>
+    `;
 
-            try {
-              const purchaseRequest: PurchaseMedallionRequest = {
-                buyerAddress: data.buyerAddress,
-                paymentTransactionId: data.transactionId
-              };
+    const inputs = [
+      {
+        name: 'buyerAddress',
+        type: 'text' as const,
+        label: 'Wallet Address',
+        placeholder: 'Your wallet address (0.0.xxxxx)',
+        required: true
+      },
+      {
+        name: 'transactionId',
+        type: 'text' as const,
+        label: 'Transaction ID',
+        placeholder: 'Payment transaction ID',
+        required: true
+      }
+    ];
 
-              console.log('Purchasing medallion:', hexagon.hexId, purchaseRequest);
-              const result = await this.geoMedallionsService.purchaseMedallion(hexagon.hexId, purchaseRequest).toPromise();
+    const data = await this.customModalService.presentInput(
+      `Purchase Medallion ${hexagon.hexId}`,
+      inputs,
+      message,
+      'Purchase',
+      'Cancel'
+    );
 
-              if (result) {
-                console.log('Purchase successful:', result);
-                await this.showPurchaseSuccessDialog(result);
-                // Reload data to reflect the purchase
-                this.loadData();
-              }
-            } catch (error) {
-              console.error('Purchase failed:', error);
-              await this.showPurchaseErrorDialog(error);
-            }
+    if (data && data.buyerAddress && data.transactionId) {
+      try {
+        const purchaseRequest: PurchaseMedallionRequest = {
+          buyerAddress: data.buyerAddress,
+          paymentTransactionId: data.transactionId
+        };
 
-            return true;
-          }
+        console.log('Purchasing medallion:', hexagon.hexId, purchaseRequest);
+        const result = await this.geoMedallionsService.purchaseMedallion(hexagon.hexId, purchaseRequest).toPromise();
+
+        if (result) {
+          console.log('Purchase successful:', result);
+          await this.showPurchaseSuccessDialog(result);
+          // Reload data to reflect the purchase
+          this.loadData();
         }
-      ]
-    });
-
-    await alert.present();
+      } catch (error) {
+        console.error('Purchase failed:', error);
+        await this.showPurchaseErrorDialog(error);
+      }
+    }
   }
 
   private async showPurchaseSuccessDialog(result: any) {
-    const alert = await this.alertController.create({
-      header: 'Purchase Successful!',
-      message: `
-        <div style="text-align: center;">
-          <p><strong>Status:</strong> ${result.status}</p>
-          <p><strong>Message:</strong> ${result.message}</p>
-          <p><strong>Job ID:</strong> ${result.jobId}</p>
-          <p>Your NFT is being minted. This may take a few minutes to complete.</p>
-        </div>
-      `,
-      buttons: ['OK']
-    });
+    const message = `
+      <div style="text-align: center;">
+        <p><strong>Status:</strong> ${result.status}</p>
+        <p><strong>Message:</strong> ${result.message}</p>
+        <p><strong>Job ID:</strong> ${result.jobId}</p>
+        <p>Your NFT is being minted. This may take a few minutes to complete.</p>
+      </div>
+    `;
 
-    await alert.present();
+    await this.customModalService.presentInfo('Purchase Successful!', message, 'OK');
   }
 
   private async showPurchaseErrorDialog(error: any) {
-    const alert = await this.alertController.create({
-      header: 'Purchase Failed',
-      message: `
-        <div style="text-align: center;">
-          <p><strong>Error:</strong> ${error.error?.message || error.message || 'Unknown error'}</p>
-          <p>Please check your transaction ID and try again.</p>
-        </div>
-      `,
-      buttons: ['OK']
-    });
+    const message = `
+      <div style="text-align: center;">
+        <p><strong>Error:</strong> ${error.error?.message || error.message || 'Unknown error'}</p>
+        <p>Please check your transaction ID and try again.</p>
+      </div>
+    `;
 
-    await alert.present();
+    await this.customModalService.presentInfo('Purchase Failed', message, 'OK');
   }
 
-  private async showRentDialog(hexagon: HexagonData) {
-    const alert = await this.alertController.create({
-      header: `Hexagon #${hexagon.id} - Owned`,
-      message: `
-        <div style="text-align: center;">
-          <p><strong>Location:</strong> ${hexagon.center[1].toFixed(4)}, ${hexagon.center[0].toFixed(4)}</p>
-          <p><strong>Status:</strong> Owned${hexagon.owner ? ' by ' + hexagon.owner : ''}</p>
-          <p>This hexagon is already owned. You can request to rent device placement rights from the owner.</p>
-        </div>
-      `,
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Request Rental',
-          handler: () => {
-            this.hexagonRentRequest.emit({
-              hexagonId: hexagon.id,
-              ownerAddress: hexagon.owner
-            });
-          }
-        }
-      ]
-    });
-
-    await alert.present();
-  }
-
-  // These methods are now handled by the alert dialogs
 
   onHexagonSearch(hexagonId: string) {
     console.log('Searching for hexagon:', hexagonId);
@@ -1316,5 +1184,32 @@ export class MapComponent implements OnInit, OnDestroy {
 
     // Update the data source
     (this.map.getSource(this.hexagonSourceId) as mapboxgl.GeoJSONSource).setData(this.hexagonGrid);
+  }
+
+  /**
+   * Setup coordinate selection click handler
+   */
+  private setupCoordinateSelectionHandler() {
+    this.map.on('click', (e) => {
+      if (this.coordinateSelectionMode) {
+        const { lng, lat } = e.lngLat;
+        this.onCoordinateSelect(lat, lng);
+      }
+    });
+  }
+
+  /**
+   * Handle coordinate selection
+   */
+  private onCoordinateSelect(latitude: number, longitude: number) {
+    console.log('Coordinate selected:', latitude, longitude);
+    this.coordinateSelected.emit({ latitude, longitude });
+  }
+
+  /**
+   * Exit coordinate selection mode
+   */
+  exitCoordinateSelectionMode() {
+    this.coordinateSelected.emit({ latitude: 0, longitude: 0 }); // Signal to exit mode
   }
 }
