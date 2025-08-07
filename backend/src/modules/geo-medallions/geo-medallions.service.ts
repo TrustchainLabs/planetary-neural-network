@@ -84,7 +84,7 @@ export class GeoMedallionsService {
         center,
         vertices,
         price,
-        available: available ?? true,
+        available: true,
         metadata: {
           name: `GeoMedallion ${hexId}`,
           description: `5km radius territory centered at ${center.latitude}, ${center.longitude}`,

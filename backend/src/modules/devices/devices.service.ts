@@ -26,10 +26,6 @@ export class DevicesService  {
     try {
       const medallion = await this.geoMedallionsService.findOne(createDeviceDto.hexId);
       
-      if (!medallion.available) {
-        throw new BadRequestException(`Medallion ${createDeviceDto.hexId} is not available for device placement`);
-      }
-
       // Check if medallion is owned (not required but recommended)
       if (!medallion.ownerAddress) {
         console.warn(`Warning: Placing device on unowned medallion ${createDeviceDto.hexId}`);

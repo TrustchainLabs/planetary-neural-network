@@ -11,6 +11,7 @@ import { ChartDataPoint, ChartLegends } from '../common/line-chart/line-chart.co
 import { formatTemperature, formatPressure, formatWindSpeed, formatWindDirection, formatAirQuality } from '../../shared/helpers';
 import { NodesService, Device } from '../../shared/services/nodes.service';
 import * as dayjs from 'dayjs';
+import { GeoMedallion } from '../../shared/services/geo-medallions.service';
 
 @Component({
   selector: 'app-left-panel-content',
@@ -63,8 +64,8 @@ import * as dayjs from 'dayjs';
               <div class="medallion-info">
                 <h4>{{ selectedHexagon.hexId }}</h4>
                 <p class="coordinates">
-                  {{ selectedHexagon.center?.latitude | number:'1.4-4' }},
-                  {{ selectedHexagon.center?.longitude | number:'1.4-4' }}
+                  {{ selectedHexagon.center[0] | number:'1.4-4' }},
+                  {{ selectedHexagon.center[1] | number:'1.4-4' }}
                 </p>
               </div>
               <div class="medallion-status">
@@ -102,7 +103,7 @@ import * as dayjs from 'dayjs';
               </div>
 
               <div *ngIf="!selectedHexagon.available" class="device-actions">
-                <ion-button expand="block" fill="outline" (click)="addDevice()">
+                <ion-button expand="block" fill="outline" (click)="addDevice(selectedHexagon)">
                   <ion-icon name="add-circle-outline" slot="start"></ion-icon>
                   Add Device
                 </ion-button>
@@ -246,10 +247,10 @@ export class LeftPanelContentComponent implements OnInit, OnChanges {
     }));
   }
 
-  addDevice() {
+  addDevice(hexagon: GeoMedallion) {
     // Switch to add device tab
     document.dispatchEvent(new CustomEvent('switchToAddDeviceTab', {
-      detail: { hexagon: this.selectedHexagon }
+      detail: { hexagon: hexagon }
     }));
   }
 
