@@ -22,12 +22,12 @@ import * as dayjs from 'dayjs';
       position="left"
       [style]="{ left: '110px' }"
     >
-      <div class="top" *ngIf="selectedTab !== TabName.ADD_DEVICE">
+      <!-- <div class="top" *ngIf="selectedTab !== TabName.ADD_DEVICE">
         <div class="title" *ngIf="selectedNode?.properties['uuid']">
           <div class="title-key">Device</div>
           <div class="title-value">{{ selectedNode.properties['uuid'] }}</div>
         </div>
-      </div>
+      </div> -->
 
       <app-left-panel-content
         [selectedNode]="selectedNode"

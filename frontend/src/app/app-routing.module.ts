@@ -20,7 +20,7 @@ const routes: Routes = [
     canActivate: [GuestGuard]
   },
   {
-    path: 'admin/geo-medallions',
+    path: 'admin-dashboard',
     loadChildren: () => import('./pages/geo-medallions-admin/geo-medallions-admin.module').then(m => m.GeoMedallionsAdminPageModule),
     canActivate: [AuthGuard]
   },

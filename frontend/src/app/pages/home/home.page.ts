@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { NodesService } from '../../shared/services/nodes.service';
@@ -60,7 +60,7 @@ import { MapComponent, PurchaseRequest } from '../../components/map/map.componen
   `,
   styleUrls: ['./home.page.scss']
 })
-export class HomePage implements OnInit {
+export class HomePage implements OnInit, OnDestroy {
   isLoggedIn$: Observable<boolean>;
   nodeData?: FeatureCollection;
   selectedNode?: Feature;
@@ -84,6 +84,32 @@ export class HomePage implements OnInit {
   ngOnInit() {
     this.loadNodeData();
     this.loadOwnedHexagons();
+    this.setupEventListeners();
+  }
+
+  ngOnDestroy() {
+    this.removeEventListeners();
+  }
+
+  private setupEventListeners() {
+    // Listen for tab switching events from left-panel-content
+    document.addEventListener('switchToPurchaseTab', this.handleSwitchToPurchaseTab.bind(this));
+    document.addEventListener('switchToAddDeviceTab', this.handleSwitchToAddDeviceTab.bind(this));
+  }
+
+  private removeEventListeners() {
+    document.removeEventListener('switchToPurchaseTab', this.handleSwitchToPurchaseTab.bind(this));
+    document.removeEventListener('switchToAddDeviceTab', this.handleSwitchToAddDeviceTab.bind(this));
+  }
+
+  private handleSwitchToPurchaseTab(event: any) {
+    console.log('Switching to purchase tab for hexagon:', event.detail.hexagon);
+    this.selectedTab = TabName.PURCHASE_MEDALLION;
+  }
+
+  private handleSwitchToAddDeviceTab(event: any) {
+    console.log('Switching to add device tab for hexagon:', event.detail.hexagon);
+    this.selectedTab = TabName.ADD_DEVICE;
   }
 
   async loadNodeData() {
@@ -187,35 +213,7 @@ export class HomePage implements OnInit {
     // Store the selected hexagon
     this.selectedHexagon = hexagon;
 
-    if (hexagon.isOwned) {
-      // Check if medallion has devices
-      const hasDevices = hexagon.devices && hexagon.devices.length > 0;
-
-      if (hasDevices) {
-        // If medallion has devices, switch to DEVICE_MANAGEMENT tab
-        console.log('Medallion is owned with devices, opening device management for:', hexagon.hexId);
-        this.selectedTab = TabName.DEVICE_MANAGEMENT;
-
-        // Dispatch event to filter devices by this medallion
-        setTimeout(() => {
-          const event = new CustomEvent('medallionDeviceFilter', {
-            detail: { hexId: hexagon.hexId, medallion: hexagon }
-          });
-          document.dispatchEvent(event);
-        }, 100);
-            } else {
-        // If medallion is owned but has no devices, switch to ADD_DEVICE tab
-        console.log('Medallion is owned but has no devices, opening add device for:', hexagon.hexId);
-        this.selectedTab = TabName.ADD_DEVICE;
-      }
-    } else if (hexagon.available) {
-      // If medallion is available for purchase, switch to PURCHASE_MEDALLION tab
-      console.log('Medallion is available for purchase, opening purchase for:', hexagon.hexId);
-      this.selectedTab = TabName.PURCHASE_MEDALLION;
-        } else {
-      // If medallion is unavailable, switch to ADD_DEVICE tab (fallback)
-      console.log('Medallion is unavailable, opening add device for:', hexagon.hexId);
-      this.selectedTab = TabName.ADD_DEVICE;
-    }
+    // Always switch to the GEO_MEDALLION tab to show medallion details
+    this.selectedTab = TabName.GEO_MEDALLION;
   }
 }

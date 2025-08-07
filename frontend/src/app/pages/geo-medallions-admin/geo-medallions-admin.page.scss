@@ -27,6 +27,34 @@
     }
   }
 
+  // Search Section
+  .search-section {
+    margin-bottom: 24px;
+
+    ion-searchbar {
+      --background: var(--content-background-color);
+      --border-radius: 8px;
+      --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      --color: var(--text-color);
+      --placeholder-color: var(--text-color);
+      --placeholder-opacity: 0.6;
+      --icon-color: var(--text-color);
+      --clear-button-color: var(--text-color);
+
+      margin: 0;
+      padding: 8px 0;
+
+      .searchbar-input {
+        font-size: 16px;
+        border: 1px solid var(--border-color);
+      }
+
+      &:hover {
+        --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
+
   // Section Headers
   .section-header {
     margin: 32px 0 16px 0;

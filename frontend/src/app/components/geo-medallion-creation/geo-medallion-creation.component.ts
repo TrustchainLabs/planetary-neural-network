@@ -102,18 +102,6 @@ import { GeoMedallionsService, CreateMedallionRequest } from '../../shared/servi
             </ion-button>
           </div>
         </form>
-
-        <div class="admin-section">
-          <ion-button
-            expand="block"
-            fill="outline"
-            color="secondary"
-            (click)="navigateToAdmin()"
-          >
-            <ion-icon name="settings-outline" slot="start"></ion-icon>
-            Manage All Geo Medallions
-          </ion-button>
-        </div>
     </div>
   `,
   styleUrls: ['./geo-medallion-creation.component.scss']

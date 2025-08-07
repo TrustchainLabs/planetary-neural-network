@@ -4,6 +4,7 @@ import { IonicModule } from '@ionic/angular';
 import { TabComponent } from '../../common/tab/tab.component';
 import { UserTabComponent } from '../user-tab/user-tab.component';
 import { TabName } from '../../../shared/enums';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-left-nav',
@@ -26,47 +27,47 @@ import { TabName } from '../../../shared/enums';
       </a>
 
       <div class="tabs">
-
+        <!-- 1. Dashboard -->
         <app-tab
-          className="add-device"
-          [name]="TabName.ADD_DEVICE"
-          tooltip="Add Device"
-          src="assets/icons/plus.svg"
-          alt="Plus"
-          [active]="selectedTab === TabName.ADD_DEVICE"
+          className="dashboard"
+          [name]="TabName.DASHBOARD"
+          tooltip="System Dashboard"
+          icon="stats-chart-outline"
+          alt="Dashboard"
+          [active]="selectedTab === TabName.DASHBOARD"
           (tabClick)="onTabSelect($event)"
         ></app-tab>
 
+        <!-- 2. Geo Medallion (Selector & Details) -->
         <app-tab
-          className="device-management"
-          [name]="TabName.DEVICE_MANAGEMENT"
-          tooltip="Device Management"
-          src="assets/icons/gauge.svg"
-          alt="Gauge"
-          [active]="selectedTab === TabName.DEVICE_MANAGEMENT"
+          className="geo-medallion"
+          [name]="TabName.GEO_MEDALLION"
+          tooltip="Geo Medallion"
+          icon="location-outline"
+          alt="Medallion"
+          [active]="selectedTab === TabName.GEO_MEDALLION"
           (tabClick)="onTabSelect($event)"
         ></app-tab>
 
+        <!-- 3. Create Geo Medallion -->
         <app-tab
           className="geo-medallion-creation"
           [name]="TabName.GEO_MEDALLION_CREATION"
-          tooltip="Create Geo Medallion (Admin)"
-          src="assets/icons/compass.svg"
-          alt="Compass"
+          tooltip="Create Geo Medallion"
+          icon="add-circle-outline"
+          alt="Create"
           [active]="selectedTab === TabName.GEO_MEDALLION_CREATION"
           (tabClick)="onTabSelect($event)"
         ></app-tab>
-
-        <app-tab
-          className="geo-medallion-purchase"
-          [name]="TabName.PURCHASE_MEDALLION"
-          tooltip="Purchase Geo Medallion"
-          src="assets/icons/compass.svg"
-          alt="Compass"
-          [active]="selectedTab === TabName.PURCHASE_MEDALLION"
-          (tabClick)="onTabSelect($event)"
-        ></app-tab>
       </div>
+
+      <!-- Connect Wallet Button at Bottom
+      <div class="connect-wallet-section">
+        <button class="connect-wallet-btn" (click)="connectWallet()">
+          <ion-icon name="wallet-outline"></ion-icon>
+          <span>Connect Wallet</span>
+        </button>
+      </div> -->
 
       <app-user-tab class="user-tab"></app-user-tab>
     </div>
@@ -79,7 +80,20 @@ export class LeftNavComponent {
 
   TabName = TabName;
 
+  constructor(private router: Router) {}
+
   onTabSelect(tab: TabName) {
-    this.tabSelect.emit(tab);
+    if (tab === TabName.DASHBOARD) {
+      // Navigate to admin dashboard
+      this.router.navigate(['/admin-dashboard']);
+    } else {
+      // For other tabs, emit to parent (home page) to handle
+      this.tabSelect.emit(tab);
+    }
+  }
+
+  connectWallet() {
+    // Navigate to login page for wallet connection
+    this.router.navigate(['/login']);
   }
 }

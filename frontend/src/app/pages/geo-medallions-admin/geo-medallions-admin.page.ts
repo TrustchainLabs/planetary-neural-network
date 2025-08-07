@@ -19,7 +19,7 @@ import { firstValueFrom } from 'rxjs';
   template: `
     <ion-header [translucent]="true">
       <ion-toolbar>
-        <ion-title>System Overview</ion-title>
+        <ion-title>System Dashboard</ion-title>
         <ion-buttons slot="start">
           <ion-back-button defaultHref="/dashboard"></ion-back-button>
         </ion-buttons>
@@ -35,10 +35,22 @@ import { firstValueFrom } from 'rxjs';
       <div class="overview-container">
         <!-- Simple Stats -->
         <div class="stats-section">
-          <h2>System Overview</h2>
+          <h2>System Dashboard</h2>
           <div class="simple-stats">
             <p>{{ overviewStats.totalMedallions }} medallions ({{ overviewStats.soldMedallions }} sold) • {{ overviewStats.totalDevices }} devices ({{ overviewStats.activeDevices }} active) • {{ overviewStats.totalSensorReadings }} sensor readings • {{ overviewStats.totalAnalysisReports }} analysis reports</p>
           </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-section">
+          <ion-searchbar
+            [(ngModel)]="searchTerm"
+            (ionInput)="onSearchChange($event)"
+            placeholder="Search by Hex ID or Device ID"
+            debounce="300"
+            show-clear-button="focus"
+            clear-icon="close-circle-outline">
+          </ion-searchbar>
         </div>
 
         <div class="content-section">
@@ -52,15 +64,15 @@ import { firstValueFrom } from 'rxjs';
             <h3>Medallions</h3>
           </div>
 
-          <div *ngIf="!isLoading && medallions.length === 0" class="no-data">
+          <div *ngIf="!isLoading && filteredMedallions.length === 0" class="no-data">
             <ion-icon name="diamond-outline" size="large"></ion-icon>
             <h3>No Medallions Found</h3>
-            <p>No medallions available.</p>
+            <p>{{ searchTerm ? 'No medallions match your search.' : 'No medallions available.' }}</p>
           </div>
 
-          <div *ngIf="!isLoading && medallions.length > 0" class="medallions-grid">
+          <div *ngIf="!isLoading && filteredMedallions.length > 0" class="medallions-grid">
             <div
-              *ngFor="let medallion of medallions"
+              *ngFor="let medallion of filteredMedallions"
               class="medallion-card"
               [class.available]="medallion.available"
               [class.sold]="!medallion.available && medallion.ownerAddress"
@@ -153,15 +165,15 @@ import { firstValueFrom } from 'rxjs';
             <h3>Devices</h3>
           </div>
 
-          <div *ngIf="!isLoading && allDevices.length === 0" class="no-data">
+          <div *ngIf="!isLoading && filteredDevices.length === 0" class="no-data">
             <ion-icon name="radio-outline" size="large"></ion-icon>
             <h3>No Devices Found</h3>
-            <p>No devices available.</p>
+            <p>{{ searchTerm ? 'No devices match your search.' : 'No devices available.' }}</p>
           </div>
 
-          <div *ngIf="!isLoading && allDevices.length > 0" class="medallions-grid">
+          <div *ngIf="!isLoading && filteredDevices.length > 0" class="medallions-grid">
             <div
-              *ngFor="let device of allDevices"
+              *ngFor="let device of filteredDevices"
               class="medallion-card"
               [class.available]="device.isActive"
               [class.sold]="!device.isActive"
@@ -259,6 +271,11 @@ export class GeoMedallionsAdminPage implements OnInit {
 
   deviceSensorData: Map<string, { readings: SensorReading[], analysis: SensorAnalysis[] }> = new Map();
 
+  // Search functionality
+  searchTerm = '';
+  filteredMedallions: GeoMedallion[] = [];
+  filteredDevices: Device[] = [];
+
   constructor(
     private geoMedallionsService: GeoMedallionsService,
     private nodesService: NodesService,
@@ -300,6 +317,7 @@ export class GeoMedallionsAdminPage implements OnInit {
   async loadDevices() {
     try {
       this.allDevices = await firstValueFrom(this.nodesService.getDevices());
+      this.updateFilteredData();
     } catch (error) {
       console.error('Error loading devices:', error);
       throw error;
@@ -361,13 +379,37 @@ export class GeoMedallionsAdminPage implements OnInit {
         total: response.total,
         limit: response.limit
       };
+      this.updateFilteredData();
     } catch (error) {
       console.error('Error loading medallions:', error);
       throw error;
     }
   }
 
+  // Search functionality
+  onSearchChange(event: any) {
+    this.searchTerm = event.target.value?.toLowerCase() || '';
+    this.updateFilteredData();
+  }
 
+  updateFilteredData() {
+    if (!this.searchTerm) {
+      // No search term - show all data
+      this.filteredMedallions = [...this.medallions];
+      this.filteredDevices = [...this.allDevices];
+    } else {
+      // Filter medallions by hexId
+      this.filteredMedallions = this.medallions.filter(medallion =>
+        medallion.hexId.toLowerCase().includes(this.searchTerm)
+      );
+
+      // Filter devices by deviceId or hexId
+      this.filteredDevices = this.allDevices.filter(device =>
+        device.deviceId.toLowerCase().includes(this.searchTerm) ||
+        device.hexId.toLowerCase().includes(this.searchTerm)
+      );
+    }
+  }
 
   changePage(page: number) {
     this.currentPage = page;

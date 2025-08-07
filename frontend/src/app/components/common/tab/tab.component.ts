@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TabName } from '../../../shared/enums';
+import { IonicModule } from '@ionic/angular';
 
 @Component({
   selector: 'app-tab',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, IonicModule],
   template: `
     <div
       class="container"
@@ -14,13 +15,7 @@ import { TabName } from '../../../shared/enums';
       (click)="onTabClick()"
       [title]="tooltip"
     >
-      <img
-        class="icon"
-        [src]="src"
-        [alt]="alt"
-        width="18"
-        height="16"
-      />
+      <ion-icon [name]="icon"></ion-icon>
     </div>
   `,
   styleUrls: ['./tab.component.scss']
@@ -29,7 +24,7 @@ export class TabComponent {
   @Input() className: string = '';
   @Input() name!: TabName;
   @Input() tooltip?: string;
-  @Input() src!: string;
+  @Input() icon: string = '';
   @Input() alt!: string;
   @Input() active: boolean = false;
   @Output() tabClick = new EventEmitter<TabName>();
