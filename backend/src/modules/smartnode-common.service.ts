@@ -180,9 +180,6 @@ export class SmartNodeCommonService implements OnModuleInit {
       const submitMsgTxBytes = await this.smartNodeSdkService.sdk.hashgraph.hcs.submitMessage(topicId, {
         message: JSON.stringify(message),
         signature: signature,
-        sender: {
-          id: senderId || this.operator.accountId as any,
-        }
       } as IHashgraph.ILedger.IHCS.ITopic.IMessage.ISubmit);
       
       const submitMsgTx = Transaction.fromBytes(new Uint8Array(Buffer.from(submitMsgTxBytes)));
