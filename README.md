@@ -5,8 +5,6 @@ Ecosphere builds a decentralized, edge-first climate intelligence network on Hed
 - **Backend**: NestJS Smart App (`./backend`) – device data ingestion, validation, Smart Node + Hedera integrations, APIs and websockets
 - **Frontend**: Ionic + Angular app (`./frontend`) – wallet connect, map, medallion purchase/admin, device UX
 
-Useful background reading: see `ecosphere_pitch.txt` and the documentation at [docs.ecosphereprime.com](https://docs.ecosphereprime.com).
-
 ### Prerequisites
 - Node.js (LTS recommended)
 - Yarn (we do not use npm)
