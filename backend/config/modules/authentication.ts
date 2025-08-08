@@ -57,7 +57,8 @@ export default registerAs('authentication', (): IAuth.IConfiguration.IAuthentica
         /** @property {string} appName - Name of the application. */
         appName: 'Dao',
         /** @property {Object} operator - Operator configuration from client module. */
-       operator: client().ledgers[process.env.LEDGER].credentials
+       //operator: client().ledgers[process.env.LEDGER].credentials
+       operator: client().ledgers.hashgraph.credentials
     },
     /** @property {Object} web2Options - Web2 authentication configuration. */
     web2Options: {

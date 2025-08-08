@@ -84,7 +84,7 @@ export async function bootstrap() {
   app.enableShutdownHooks();
 
   // Start listening on configured port
-  const port = process.env.DEVICE_PORT || 3001;
+  const port = process.env.DEVICE_PORT || 8877;
   await app.listen(port, '0.0.0.0');
 
   console.log(`📡 Device mode running on port ${port}`);

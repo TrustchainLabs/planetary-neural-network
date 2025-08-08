@@ -1,4 +1,6 @@
-export const API_BASE_URL = 'http://localhost:8888';
+import { environment } from '../../../environments/environment';
+
+export const API_BASE_URL = environment.smartAppUrl;
 export const SMART_APP_API_URL = API_BASE_URL;
 
 export const APP_CONSTANTS = {

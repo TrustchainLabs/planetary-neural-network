@@ -5,8 +5,11 @@
   "homepage": "https://ionicframework.com/",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --configuration development --host 0.0.0.0 --allowed-hosts",
     "build": "ng build",
+    "build:prod": "ng build --configuration production",
+    "serve:prod": "node server.js",
+    "start:prod": "npm run build:prod && npm run serve:prod",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint"
@@ -40,6 +43,7 @@
     "@walletconnect/types": "2.21.3",
     "@walletconnect/utils": "^2.21.3",
     "@walletconnect/web3wallet": "^1.16.1",
+    "axios": "^1.11.0",
     "bignumber.js": "9.1.2",
     "chart.js": "^4.5.0",
     "dayjs": "^1.11.13",

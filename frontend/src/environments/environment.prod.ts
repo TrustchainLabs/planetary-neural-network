@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
   isDebugEnabled: false,
-  smartAppUrl: 'http://localhost:8888',
+  smartAppUrl: 'https://smartdevice2.ecosphereprime.com',
   ledger: 'testnet'
 };

@@ -120,7 +120,7 @@ export async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   // Start listening on configured port
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 8888;
   await app.listen(port, '0.0.0.0');
 
   console.log(`🌍 Production mode running on port ${port}`);

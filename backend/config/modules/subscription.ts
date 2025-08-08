@@ -15,7 +15,10 @@ import { registerAs } from "@nestjs/config";
  * @param base64String The base64 encoded JSON string
  * @returns Parsed JSON object
  */
-function decodeAndParseJson(base64String: string) {
+function decodeAndParseJson(base64String: string | undefined) {
+    if (!base64String) {
+        return {};
+    }
     const decodedString = Buffer.from(base64String, 'base64').toString('utf-8');
     return JSON.parse(decodedString);
 }
