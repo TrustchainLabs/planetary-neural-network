@@ -1,4 +1,4 @@
-### Ecosphere – Planetary Neural Network (Hedera Origins Hackathon)
+### Ecosphere – Planetary Neural Network (Hedera Africa Hackathon)
 
 Ecosphere builds a decentralized, edge-first climate intelligence network on Hedera. The platform tokenizes geography into Geo Medallion NFTs, runs a Smart App on devices for on-device validation and AI inferencing, and anchors integrity and rewards through Smart Nodes and Hedera services.
 
