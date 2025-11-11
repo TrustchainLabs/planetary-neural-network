@@ -1,9 +1,12 @@
 export enum TabName {
-  ADD_DEVICE = 'addDevice',
   DASHBOARD = 'dashboard',
   GEO_MEDALLION = 'geoMedallion',
   GEO_MEDALLION_CREATION = 'geoMedallionCreation',
-  PURCHASE_MEDALLION = 'purchaseMedallion'
+  PURCHASE_MEDALLION = 'purchaseMedallion',
+  AVAILABLE_DEVICES = 'availableDevices',
+  MY_PARTNERSHIPS = 'myPartnerships',
+  // Legacy - deprecated
+  ADD_DEVICE = 'addDevice'
 }
 
 export enum UserType {

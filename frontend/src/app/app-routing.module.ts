@@ -24,12 +24,6 @@ const routes: Routes = [
     loadChildren: () => import('./pages/geo-medallions-admin/geo-medallions-admin.module').then(m => m.GeoMedallionsAdminPageModule),
     canActivate: [AuthGuard]
   },
-
-  // Keep existing routes for backward compatibility
-  {
-    path: 'home',
-    loadChildren: () => import('./home/home.module').then( m => m.HomePageModule)
-  },
   {
     path: '**',
     redirectTo: '/dashboard'

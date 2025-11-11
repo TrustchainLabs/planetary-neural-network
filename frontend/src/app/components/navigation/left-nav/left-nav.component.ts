@@ -59,6 +59,17 @@ import { Router } from '@angular/router';
           [active]="selectedTab === TabName.GEO_MEDALLION_CREATION"
           (tabClick)="onTabSelect($event)"
         ></app-tab>
+
+        <!-- 4. Available Devices (Licor Partnership) -->
+        <app-tab
+          className="available-devices"
+          [name]="TabName.AVAILABLE_DEVICES"
+          tooltip="Available Licor Devices"
+          icon="hardware-chip-outline"
+          alt="Devices"
+          [active]="selectedTab === TabName.AVAILABLE_DEVICES"
+          (tabClick)="onTabSelect($event)"
+        ></app-tab>
       </div>
 
       <!-- Connect Wallet Button at Bottom

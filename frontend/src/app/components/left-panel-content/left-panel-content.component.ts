@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { LineChartComponent } from '../common/line-chart/line-chart.component';
 import { AddDeviceComponent } from '../add-device/add-device.component';
+import { AvailableDevicesComponent } from '../available-devices/available-devices.component';
 import { GeoMedallionCreationComponent } from '../geo-medallion-creation/geo-medallion-creation.component';
 import { PurchaseMedallionComponent } from '../purchase-medallion/purchase-medallion.component';
 import { Feature } from '../../shared/types';
@@ -21,6 +22,7 @@ import { GeoMedallion } from '../../shared/services/geo-medallions.service';
     IonicModule,
     LineChartComponent,
     AddDeviceComponent,
+    AvailableDevicesComponent,
     GeoMedallionCreationComponent,
     PurchaseMedallionComponent
   ],
@@ -30,6 +32,9 @@ import { GeoMedallion } from '../../shared/services/geo-medallions.service';
         <app-add-device [selectedHexagon]="selectedHexagon"></app-add-device>
       </div>
 
+      <div *ngIf="selectedTab === TabName.AVAILABLE_DEVICES">
+        <app-available-devices></app-available-devices>
+      </div>
 
       <div *ngIf="selectedTab === TabName.GEO_MEDALLION_CREATION">
         <app-geo-medallion-creation

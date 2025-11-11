@@ -5,8 +5,27 @@
 export const environment = {
   production: false,
   isDebugEnabled: false,
+  apiUrl: 'http://localhost:8888',
   smartAppUrl: 'https://smartdevice2.ecosphereprime.com',
-  ledger: 'testnet'
+  ledger: 'testnet',
+  
+  // Wallet configuration
+  walletConnect: {
+    projectId: '9c0251b8e667472a75a2147bdce1b614',
+    metadata: {
+      name: 'Ecosphere',
+      description: 'Decentralized Climate Intelligence Network on Hedera',
+      url: 'https://ecosphereprime.com',
+      icons: ['https://ecosphereprime.com/assets/icon/favicon.png']
+    }
+  },
+  
+  // Network configuration
+  hedera: {
+    network: 'testnet',
+    supportedNetworks: ['testnet', 'mainnet'],
+    defaultNetwork: 'testnet'
+  }
 };
 
 /*

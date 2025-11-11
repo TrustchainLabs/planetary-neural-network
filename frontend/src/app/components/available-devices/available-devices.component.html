@@ -1,0 +1,136 @@
+<div class="available-devices-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Available Licor Devices</h1>
+    <p class="subtitle">Professional environmental monitoring systems available for partnership</p>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <ion-searchbar 
+      [(ngModel)]="searchTerm"
+      (ionChange)="applyFilters()"
+      placeholder="Search devices..."
+      animated="true">
+    </ion-searchbar>
+
+    <ion-select 
+      [(ngModel)]="selectedDeviceType"
+      (ionChange)="applyFilters()"
+      interface="popover"
+      placeholder="Filter by type">
+      <ion-select-option *ngFor="let type of deviceTypes" [value]="type.value">
+        {{ type.label }}
+      </ion-select-option>
+    </ion-select>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading available devices...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && filteredDevices.length === 0" class="empty-state">
+    <ion-icon name="cube-outline" size="large"></ion-icon>
+    <h3>No devices found</h3>
+    <p *ngIf="searchTerm || selectedDeviceType">Try adjusting your filters</p>
+    <p *ngIf="!searchTerm && !selectedDeviceType">No Licor devices available at the moment</p>
+  </div>
+
+  <!-- Devices Grid -->
+  <div *ngIf="!isLoading && filteredDevices.length > 0" class="devices-grid">
+    <ion-card *ngFor="let device of filteredDevices" class="device-card">
+      <!-- Device Image/Icon -->
+      <div class="device-image">
+        <ion-icon name="hardware-chip-outline" size="large"></ion-icon>
+      </div>
+
+      <!-- Device Header -->
+      <ion-card-header>
+        <div class="card-header-top">
+          <ion-card-title>{{ device.name }}</ion-card-title>
+          <ion-badge [color]="getAvailabilityColor(device)" class="availability-badge">
+            {{ getAvailabilityLabel(device) }}
+          </ion-badge>
+        </div>
+        <ion-card-subtitle>
+          <ion-icon name="location-outline"></ion-icon>
+          {{ device.hexId }}
+        </ion-card-subtitle>
+      </ion-card-header>
+
+      <!-- Device Content -->
+      <ion-card-content>
+        <!-- Device Type -->
+        <div class="device-info-row">
+          <ion-icon name="analytics-outline"></ion-icon>
+          <span class="label">Type:</span>
+          <span class="value">{{ getDeviceTypeName(device.deviceType) }}</span>
+        </div>
+
+        <!-- Capabilities (if available) -->
+        <div *ngIf="device.licorConfig?.capabilities" class="capabilities">
+          <ion-chip *ngFor="let capability of device.licorConfig.capabilities" outline="true" size="small">
+            {{ capability }}
+          </ion-chip>
+        </div>
+
+        <!-- Description -->
+        <p *ngIf="device.metadata?.description" class="description">
+          {{ device.metadata.description }}
+        </p>
+
+        <!-- Instrument Model -->
+        <div *ngIf="device.metadata?.instrumentModel" class="device-info-row">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <span class="value">{{ device.metadata.instrumentModel }}</span>
+        </div>
+
+        <!-- Shares Info -->
+        <div class="shares-section">
+          <div class="shares-header">
+            <span class="shares-label">Available Shares</span>
+            <span class="shares-value">{{ device.availableShares }}/{{ device.totalShares }}</span>
+          </div>
+          
+          <!-- Progress Bar -->
+          <div class="progress-bar">
+            <div 
+              class="progress-fill"
+              [style.width.%]="(device.soldShares / device.totalShares) * 100"
+              [ngClass]="'color-' + getAvailabilityColor(device)">
+            </div>
+          </div>
+          
+          <div class="shares-stats">
+            <span class="stat">
+              <ion-icon name="people-outline"></ion-icon>
+              {{ device.soldShares }} sold
+            </span>
+            <span class="stat price">
+              <ion-icon name="logo-usd"></ion-icon>
+              {{ device.pricePerShare }} HBAR/share
+            </span>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <ion-button 
+          expand="block" 
+          color="primary" 
+          (click)="openPurchaseModal(device)"
+          [disabled]="device.availableShares === 0">
+          <ion-icon name="cart-outline" slot="start"></ion-icon>
+          {{ device.availableShares === 0 ? 'Fully Subscribed' : 'Buy Shares' }}
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Results Count -->
+  <div *ngIf="!isLoading && filteredDevices.length > 0" class="results-count">
+    Showing {{ filteredDevices.length }} device{{ filteredDevices.length !== 1 ? 's' : '' }}
+  </div>
+</div>

@@ -1,9 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { IonicModule, ToastController, ModalController } from '@ionic/angular';
+import { IonicModule, ToastController, ModalController, LoadingController } from '@ionic/angular';
 import { AuthService } from '../../../shared/services/auth.service';
 import { WalletsModalComponent } from '../../wallets-modal/wallets-modal.component';
+import { WalletConnectService, WC_Session } from '../../../services/wallet-connect.service';
+import { base64StringToSignatureMap } from '@kabila-tech/hedera-wallet-connect';
+import { LoggerUtil } from '../../../../utils/logger/logger';
 
 @Component({
   selector: 'app-login-form',
@@ -75,61 +78,170 @@ import { WalletsModalComponent } from '../../wallets-modal/wallets-modal.compone
 })
 export class LoginFormComponent implements OnInit {
   isLoading = false;
+  private loading: HTMLIonLoadingElement | undefined;
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private toastController: ToastController,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private loadingController: LoadingController,
+    private walletConnectService: WalletConnectService
   ) {}
 
-  ngOnInit() {
-    // No form needed for wallet connect
+  async ngOnInit() {
+    // Initialize WalletConnect
+    LoggerUtil.log('🔌 Initializing WalletConnect on login page...');
+    await this.walletConnectService.init();
+    
+    // Check for existing session
+    const existingSession = await this.walletConnectService.checkSession();
+    if (existingSession) {
+      LoggerUtil.log('✅ Found existing wallet session, redirecting to dashboard...');
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   async connectWallet() {
     const modal = await this.modalController.create({
       component: WalletsModalComponent,
-      cssClass: 'wallets-modal'
-    });
-
-    modal.onDidDismiss().then((result) => {
-      if (result.data && result.data.wallet) {
-        this.handleWalletConnection(result.data.wallet);
+      cssClass: 'hsuite-modal',
+      componentProps: {
+        walletExtensions: this.walletConnectService.walletExtensions
       }
     });
 
-    return await modal.present();
+    const { data, role } = await modal.onWillDismiss();
+
+    if (role === 'confirm' && data) {
+      try {
+        this.isLoading = true;
+        
+        switch (data.name) {
+          case 'walletconnect':
+            await this.walletConnectService.connect();
+            break;
+          default:
+            await this.walletConnectService.connectExtension(data.id);
+            break;
+        }
+
+        // Wait for session to be established
+        await this.waitForSessionAndAuthenticate();
+        
+      } catch (error: any) {
+        LoggerUtil.error('❌ Wallet connection error:', error);
+        await this.showToast(error.message || 'Wallet connection failed. Please try again.', 'danger');
+        this.isLoading = false;
+      }
+    }
   }
 
-  async handleWalletConnection(walletType: string) {
-    this.isLoading = true;
+  private async waitForSessionAndAuthenticate() {
+    // Listen for session connection
+    const subscription = this.walletConnectService.eventsObserver.subscribe(async (event: any) => {
+      LoggerUtil.log('📡 Wallet event received:', event);
+      
+      switch (event.type) {
+        case 'session_connect':
+          LoggerUtil.log('🤝 Session connected, starting authentication...');
+          const session = await this.walletConnectService.getSelectedSession();
+          if (session) {
+            await this.authenticateSession(session);
+          }
+          subscription.unsubscribe();
+          break;
+          
+        case 'error':
+          LoggerUtil.error('❌ Wallet error:', event.content);
+          await this.showToast(event.content.message, 'danger');
+          this.isLoading = false;
+          subscription.unsubscribe();
+          break;
+      }
+    });
+  }
+
+  private async authenticateSession(session: WC_Session) {
     try {
-      // Simulate wallet connection
-      const walletUser = {
-        accessToken: `wallet_token_${Date.now()}`,
-        operator: { _id: 'wallet_op', name: 'Wallet User', email: 'wallet@user.com' },
-        user: { _id: 'wallet_user', email: 'wallet@user.com', username: 'Wallet User', wallet: walletType }
+      LoggerUtil.log('🚀 Starting authentication flow for session:', session);
+      await this.showLoading('Requesting authentication challenge...');
+
+      // Get the challenge payload that needs to be signed
+      const challenge = await this.walletConnectService.requestAuthChallenge();
+      await this.hideLoading();
+
+      await this.showLoading('Please sign the message with your wallet...');
+
+      const payload = {
+        serverSignature: challenge.signedData.signature,
+        originalPayload: challenge.payload
       };
 
-      localStorage.setItem('accessToken', walletUser.accessToken);
-      localStorage.setItem('operator', JSON.stringify(walletUser.operator));
-      localStorage.setItem('user', JSON.stringify(walletUser.user));
-      localStorage.setItem('walletType', walletType);
+      const signedMessage = await this.walletConnectService.hederaSignMessage(
+        session,
+        JSON.stringify(payload)
+      );
+      
+      const signatureMap = base64StringToSignatureMap(signedMessage.signatureMap);
 
-      this.router.navigate(['/dashboard']);
-    } catch (e) {
-      console.error(e);
-      const toast = await this.toastController.create({
-        message: 'Wallet connection failed. Please try again.',
-        duration: 3000,
-        color: 'danger',
-        position: 'bottom'
-      });
-      await toast.present();
-    } finally {
+      const signedData = {
+        signedPayload: this.walletConnectService.prefixMessageToSign(JSON.stringify(payload)),
+        userSignature: <Uint8Array>signatureMap.sigPair[0].ed25519 || signatureMap.sigPair[0].ECDSASecp256k1
+      };
+
+      await this.hideLoading();
+
+      if (signedMessage) {
+        await this.showLoading('Authenticating...');
+
+        const loginResult = await this.walletConnectService.login(signedData, session);
+        LoggerUtil.log('✅ Login successful:', loginResult);
+
+        // Update AuthService state
+        this.authService.loginWithWallet(session);
+
+        await this.hideLoading();
+        await this.showToast('Successfully connected wallet!', 'success');
+
+        this.isLoading = false;
+        this.router.navigate(['/dashboard']);
+      } else {
+        await this.hideLoading();
+        await this.showToast('Failed to verify wallet signature', 'danger');
+        this.isLoading = false;
+      }
+    } catch (error: any) {
+      LoggerUtil.error('💥 Authentication error:', error);
+      await this.hideLoading();
+      await this.showToast(
+        error.message || 'Failed to authenticate wallet',
+        'danger'
+      );
       this.isLoading = false;
     }
+  }
+
+  private async showLoading(message: string) {
+    this.loading = await this.loadingController.create({ message });
+    await this.loading.present();
+  }
+
+  private async hideLoading() {
+    if (this.loading) {
+      await this.loading.dismiss();
+      this.loading = undefined;
+    }
+  }
+
+  private async showToast(message: string, color: 'success' | 'danger' | 'warning' = 'success') {
+    const toast = await this.toastController.create({
+      message,
+      duration: 3000,
+      color,
+      position: 'bottom'
+    });
+    await toast.present();
   }
 
   async loginAsGuest() {
